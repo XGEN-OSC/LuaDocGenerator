@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lua Documentation Viewer</title>
+    <link rel="stylesheet" href="docs.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Lua Documentation</h1>
+            <div class="file-selector">
+                <label for="jsonFile">Load Documentation:</label>
+                <input type="file" id="jsonFile" accept=".json">
+            </div>
+        </header>
+
+        <div class="content">
+            <aside class="sidebar">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Search...">
+                </div>
+                <nav id="navigation">
+                    <p class="placeholder">Load a JSON file to view documentation</p>
+                </nav>
+            </aside>
+
+            <main class="main-content">
+                <div id="docContent" class="placeholder-content">
+                    <h2>Welcome to Lua Documentation Viewer</h2>
+                    <p>Please load a documentation JSON file using the file selector above.</p>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="docs.js"></script>
+</body>
+</html>
