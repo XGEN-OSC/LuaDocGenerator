@@ -4,25 +4,54 @@
       "name": "shared",
       "classes": [
         {
-          "name": "Locale",
-          "description": null,
+          "name": "ExampleClass",
+          "description": "these meta comments can have multiple lines, so becareful when parsing themClasses can also have meta comments\nthese comments can have multiple lines as well as field description\nas show below",
           "fields": [
-
+            {
+              "name": "field1",
+              "type": "string",
+              "isStatic": false,
+              "description": "this is a private field of type string"
+            },
+            {
+              "name": "field2",
+              "type": "number?",
+              "isStatic": false,
+              "description": "this is an optional field that is public and of type number"
+            },
+            {
+              "name": "field3",
+              "type": "boolean|number",
+              "isStatic": false,
+              "description": "this field can be either boolean or number"
+            },
+            {
+              "name": "method1",
+              "type": "fun(param1: string, param2: number): nil",
+              "isStatic": false,
+              "description": "this is a method that takes\na string and a number and returns nil, also these field descriptions can have multiple lines"
+            },
+            {
+              "name": "someField",
+              "type": "string",
+              "isStatic": true,
+              "description": "this is a static field of type string for the class"
+            }
           ],
           "functions": [
             {
-              "name": "new",
+              "name": "staticMethod",
               "isStatic": true,
               "description": null,
               "parameters": [
                 {
-                  "name": "_",
+                  "name": "param1",
                   "type": "any",
                   "optional": false,
                   "description": null
                 },
                 {
-                  "name": "opts",
+                  "name": "param2",
                   "type": "any",
                   "optional": false,
                   "description": null
@@ -37,136 +66,21 @@
               ]
             },
             {
-              "name": "extend",
+              "name": "method1",
               "isStatic": false,
-              "description": null,
+              "description": "This is a documented function with meta comments\nThis is a second line of the description for this function.",
               "parameters": [
                 {
-                  "name": "phrases",
-                  "type": "any",
+                  "name": "param1",
+                  "type": "string",
                   "optional": false,
-                  "description": null
+                  "description": "this is the first parameter of type string for this function"
                 },
                 {
-                  "name": "prefix",
-                  "type": "any",
+                  "name": "param2",
+                  "type": "ExampleClass",
                   "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-
-              ]
-            },
-            {
-              "name": "clear",
-              "isStatic": false,
-              "description": null,
-              "parameters": [
-
-              ],
-              "returns": [
-
-              ]
-            },
-            {
-              "name": "replace",
-              "isStatic": false,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "phrases",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-
-              ]
-            },
-            {
-              "name": "locale",
-              "isStatic": false,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "newLocale",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "t",
-              "isStatic": false,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "key",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "subs",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "has",
-              "isStatic": false,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "key",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "delete",
-              "isStatic": false,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "phraseTarget",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "prefix",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
+                  "description": "this is the second parameter of type ExampleClass for this function"
                 }
               ],
               "returns": [
@@ -178,29 +92,48 @@
               ]
             }
           ]
+        },
+        {
+          "name": "ENUM",
+          "description": "this is an enum, which sould be represented as class",
+          "fields": [
+            {
+              "name": "VLAUE1",
+              "type": "any",
+              "isStatic": false,
+              "description": null
+            },
+            {
+              "name": "VALUE2",
+              "type": "number",
+              "isStatic": false,
+              "description": "this is the second value of the enum, with an explicit type"
+            }
+          ],
+          "functions": [
+
+          ]
         }
       ],
       "functions": [
         {
-          "name": "translateKey",
+          "name": "myFunction",
           "isStatic": true,
           "description": null,
           "parameters": [
             {
-              "name": "phrase",
-              "type": "any",
-              "optional": false,
-              "description": null
-            },
-            {
-              "name": "subs",
+              "name": "param1",
               "type": "any",
               "optional": false,
               "description": null
             }
           ],
           "returns": [
-
+            {
+              "type": "any",
+              "name": "",
+              "description": null
+            }
           ]
         }
       ],
@@ -212,75 +145,54 @@
       "name": "client",
       "classes": [
         {
-          "name": "QBCore.Functions",
-          "description": null,
+          "name": "ExampleClass",
+          "description": "these meta comments can have multiple lines, so becareful when parsing themClasses can also have meta comments\nthese comments can have multiple lines as well as field description\nas show below",
           "fields": [
-
+            {
+              "name": "field1",
+              "type": "string",
+              "isStatic": false,
+              "description": "this is a private field of type string"
+            },
+            {
+              "name": "field2",
+              "type": "number?",
+              "isStatic": false,
+              "description": "this is an optional field that is public and of type number"
+            },
+            {
+              "name": "field3",
+              "type": "boolean|number",
+              "isStatic": false,
+              "description": "this field can be either boolean or number"
+            },
+            {
+              "name": "method1",
+              "type": "fun(param1: string, param2: number): nil",
+              "isStatic": false,
+              "description": "this is a method that takes\na string and a number and returns nil, also these field descriptions can have multiple lines"
+            },
+            {
+              "name": "someField",
+              "type": "string",
+              "isStatic": true,
+              "description": "this is a static field of type string for the class"
+            }
           ],
           "functions": [
             {
-              "name": "GetPlayerData",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "Debug",
+              "name": "staticMethod",
               "isStatic": true,
               "description": null,
               "parameters": [
                 {
-                  "name": "tbl",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "HideText",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "DrawText",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "text",
+                  "name": "param1",
                   "type": "any",
                   "optional": false,
                   "description": null
                 },
                 {
-                  "name": "position",
+                  "name": "param2",
                   "type": "any",
                   "optional": false,
                   "description": null
@@ -295,74 +207,21 @@
               ]
             },
             {
-              "name": "ChangeText",
-              "isStatic": true,
-              "description": null,
+              "name": "method1",
+              "isStatic": false,
+              "description": "This is a documented function with meta comments\nThis is a second line of the description for this function.",
               "parameters": [
                 {
-                  "name": "text",
-                  "type": "any",
+                  "name": "param1",
+                  "type": "string",
                   "optional": false,
-                  "description": null
+                  "description": "this is the first parameter of type string for this function"
                 },
                 {
-                  "name": "position",
-                  "type": "any",
+                  "name": "param2",
+                  "type": "ExampleClass",
                   "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "KeyPressed",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "Notify",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "text",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "texttype",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "length",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "icon",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
+                  "description": "this is the second parameter of type ExampleClass for this function"
                 }
               ],
               "returns": [
@@ -374,10 +233,50 @@
               ]
             }
           ]
+        },
+        {
+          "name": "ENUM",
+          "description": "this is an enum, which sould be represented as class",
+          "fields": [
+            {
+              "name": "VLAUE1",
+              "type": "any",
+              "isStatic": false,
+              "description": null
+            },
+            {
+              "name": "VALUE2",
+              "type": "number",
+              "isStatic": false,
+              "description": "this is the second value of the enum, with an explicit type"
+            }
+          ],
+          "functions": [
+
+          ]
         }
       ],
       "functions": [
-
+        {
+          "name": "myFunction",
+          "isStatic": true,
+          "description": null,
+          "parameters": [
+            {
+              "name": "param1",
+              "type": "any",
+              "optional": false,
+              "description": null
+            }
+          ],
+          "returns": [
+            {
+              "type": "any",
+              "name": "",
+              "description": null
+            }
+          ]
+        }
       ],
       "fields": [
 
@@ -387,1026 +286,54 @@
       "name": "server",
       "classes": [
         {
-          "name": "QBCore.Functions",
-          "description": null,
+          "name": "ExampleClass",
+          "description": "these meta comments can have multiple lines, so becareful when parsing themClasses can also have meta comments\nthese comments can have multiple lines as well as field description\nas show below",
           "fields": [
-
-          ],
-          "functions": [
             {
-              "name": "GetIdentifier",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "source",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
+              "name": "field1",
+              "type": "string",
+              "isStatic": false,
+              "description": "this is a private field of type string"
             },
             {
-              "name": "GetSource",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "identifier",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
+              "name": "field2",
+              "type": "number?",
+              "isStatic": false,
+              "description": "this is an optional field that is public and of type number"
             },
             {
-              "name": "GetPlayer",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "source",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
+              "name": "field3",
+              "type": "boolean|number",
+              "isStatic": false,
+              "description": "this field can be either boolean or number"
             },
             {
-              "name": "GetPlayerName",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "source",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
+              "name": "method1",
+              "type": "fun(param1: string, param2: number): nil",
+              "isStatic": false,
+              "description": "this is a method that takes\na string and a number and returns nil, also these field descriptions can have multiple lines"
             },
             {
-              "name": "GetPlayerByCitizenId",
+              "name": "someField",
+              "type": "string",
               "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "citizenid",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "GetOfflinePlayerByCitizenId",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "citizenid",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "GetPlayerByLicense",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "license",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "GetPlayerByPhone",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "number",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "GetPlayerByAccount",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "account",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "GetPlayerByCharInfo",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "property",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "value",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "GetPlayers",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "GetQBPlayers",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "GetPlayersOnDuty",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "job",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "GetDutyCount",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "job",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "CreateUseableItem",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "item",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "data",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "CanUseItem",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "item",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "Debug",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "tbl",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "Notify",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "source",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "message",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "type",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "length",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "icon",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "CreateCitizenId",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "CreateAccountNumber",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "CreateWalletId",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "CreatePhoneNumber",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "CreateFingerId",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "CreateSerialNumber",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "CreateApartmentId",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "GeneratePlate",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "CreateWeapon",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "weapon_name",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "coords",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "rotation",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "itemInfo",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "CreateVehicle",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "vehicle_name",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "coords",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "rotation",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "plate",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "fuel",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "SetMethod",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "methodName",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "handler",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "SetField",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "fieldName",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "data",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "AddJob",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "jobName",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "job",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "AddJobs",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "jobs",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "RemoveJob",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "jobName",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "UpdateJob",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "jobName",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "job",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "AddItem",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "itemName",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "item",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "UpdateItem",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "itemName",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "item",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "AddItems",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "items",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "RemoveItem",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "itemName",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "AddGang",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "gangName",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "gang",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "AddGangs",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "gangs",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "RemoveGang",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "gangName",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "UpdateGang",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "gangName",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "gang",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "SetPlayerBucket",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "source",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "bucket",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "AddPlayerMethod",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "ids",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "methodName",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "handler",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-
-              ]
-            },
-            {
-              "name": "AddPlayerField",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "ids",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "fieldName",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "data",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-
-              ]
+              "description": "this is a static field of type string for the class"
             }
-          ]
-        },
-        {
-          "name": "QBCore.Player",
-          "description": null,
-          "fields": [
-
           ],
           "functions": [
             {
-              "name": "Logout",
+              "name": "staticMethod",
               "isStatic": true,
               "description": null,
               "parameters": [
                 {
-                  "name": "source",
+                  "name": "param1",
+                  "type": "any",
+                  "optional": false,
+                  "description": null
+                },
+                {
+                  "name": "param2",
                   "type": "any",
                   "optional": false,
                   "description": null
@@ -1421,141 +348,21 @@
               ]
             },
             {
-              "name": "Login",
-              "isStatic": true,
-              "description": null,
+              "name": "method1",
+              "isStatic": false,
+              "description": "This is a documented function with meta comments\nThis is a second line of the description for this function.",
               "parameters": [
                 {
-                  "name": "source",
-                  "type": "any",
+                  "name": "param1",
+                  "type": "string",
                   "optional": false,
-                  "description": null
+                  "description": "this is the first parameter of type string for this function"
                 },
                 {
-                  "name": "citizenid",
-                  "type": "any",
+                  "name": "param2",
+                  "type": "ExampleClass",
                   "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "newData",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "GetPlayerByLicense",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "license",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "CheckPlayerData",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "source",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "PlayerData",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "CreatePlayer",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "PlayerData",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "Offline",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "Save",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "source",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-
-              ]
-            },
-            {
-              "name": "DeleteCharacter",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "source",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "citizenid",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
+                  "description": "this is the second parameter of type ExampleClass for this function"
                 }
               ],
               "returns": [
@@ -1569,504 +376,35 @@
           ]
         },
         {
-          "name": "self.Functions",
-          "description": null,
+          "name": "ENUM",
+          "description": "this is an enum, which sould be represented as class",
           "fields": [
-
+            {
+              "name": "VLAUE1",
+              "type": "any",
+              "isStatic": false,
+              "description": null
+            },
+            {
+              "name": "VALUE2",
+              "type": "number",
+              "isStatic": false,
+              "description": "this is the second value of the enum, with an explicit type"
+            }
           ],
           "functions": [
-            {
-              "name": "UpdatePlayerData",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
 
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "SetJob",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "job",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "grade",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "SetGang",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "gang",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "grade",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "Notify",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "text",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "type",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "length",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "icon",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-
-              ]
-            },
-            {
-              "name": "HasItem",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "items",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "amount",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-
-              ]
-            },
-            {
-              "name": "SetJobDuty",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "onDuty",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "SetPlayerData",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "key",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "val",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "SetMetaData",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "meta",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "val",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "GetMetaData",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "meta",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "AddJobReputation",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "amount",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "AddMoney",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "moneytype",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "amount",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "reason",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "RemoveMoney",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "moneytype",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "amount",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "reason",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "SetMoney",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "moneytype",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "amount",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "reason",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "GetMoney",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "moneytype",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "SetCreditCard",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "cardNumber",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "GetCardSlot",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "cardNumber",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "cardType",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "Save",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "Logout",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            },
-            {
-              "name": "AddMethod",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "methodName",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "handler",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-
-              ]
-            },
-            {
-              "name": "AddField",
-              "isStatic": true,
-              "description": null,
-              "parameters": [
-                {
-                  "name": "fieldName",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                },
-                {
-                  "name": "data",
-                  "type": "any",
-                  "optional": false,
-                  "description": null
-                }
-              ],
-              "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
-              ]
-            }
           ]
         }
       ],
       "functions": [
         {
-          "name": "DatabaseAction",
+          "name": "myFunction",
           "isStatic": true,
           "description": null,
           "parameters": [
             {
-              "name": "ActionType",
-              "type": "any",
-              "optional": false,
-              "description": null
-            },
-            {
-              "name": "...",
+              "name": "param1",
               "type": "any",
               "optional": false,
               "description": null
@@ -2078,59 +416,6 @@
               "name": "",
               "description": null
             }
-          ]
-        },
-        {
-          "name": "onShutdown",
-          "isStatic": true,
-          "description": null,
-          "parameters": [
-
-          ],
-          "returns": [
-
-          ]
-        },
-        {
-          "name": "formatItems",
-          "isStatic": true,
-          "description": null,
-          "parameters": [
-            {
-              "name": "inventory",
-              "type": "any",
-              "optional": false,
-              "description": null
-            }
-          ],
-          "returns": [
-            {
-              "type": "any",
-              "name": "",
-              "description": null
-            }
-          ]
-        },
-        {
-          "name": "applyDefaults",
-          "isStatic": true,
-          "description": null,
-          "parameters": [
-            {
-              "name": "playerData",
-              "type": "any",
-              "optional": false,
-              "description": null
-            },
-            {
-              "name": "defaults",
-              "type": "any",
-              "optional": false,
-              "description": null
-            }
-          ],
-          "returns": [
-
           ]
         }
       ],
