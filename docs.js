@@ -44,6 +44,7 @@ function buildClassRegistry(doc) {
             });
         }
     });
+    
 }
 
 // Render navigation sidebar
@@ -525,7 +526,10 @@ function renderFunctionContent(container, func) {
             li.className = 'return-item';
 
             const retType = createTypeElement(ret.type);
-            retType.textContent = retType.textContent.substring(2); // Remove ': ' prefix for returns
+            // Remove the ': ' prefix by removing the first text node
+            if (retType.firstChild && retType.firstChild.nodeType === Node.TEXT_NODE) {
+                retType.firstChild.remove();
+            }
             li.appendChild(retType);
 
             if (ret.description) {
@@ -594,23 +598,26 @@ function createTypeElement(typeString) {
         const typeSpan = document.createElement('span');
         typeSpan.textContent = typePart.name;
         
-        // Don't make separators clickable
+        // Don't make separators and punctuation clickable
         const trimmedName = typePart.name.trim();
-        if (trimmedName !== '|' && trimmedName !== '&') {
+        if (trimmedName !== '|' && trimmedName !== '&' && trimmedName !== '<' && trimmedName !== '>' && trimmedName !== ',') {
             // Check if this type is a registered class
-            const cleanType = typePart.name.trim().replace('?', ''); // Remove optional marker
+            const cleanType = trimmedName.replace(/\?$/, ''); // Remove optional marker at end
             if (classRegistry.has(cleanType)) {
-                typeSpan.style.cursor = 'pointer';
-                typeSpan.style.textDecoration = 'underline';
-                typeSpan.style.textDecorationStyle = 'dotted';
+                typeSpan.classList.add('clickable-type');
+                typeSpan.dataset.classType = cleanType;
+                typeSpan.style.cssText = 'cursor: pointer; text-decoration: underline dotted; color: var(--accent-color) !important;';
                 typeSpan.title = 'Click to view ' + cleanType;
-                
+
                 typeSpan.addEventListener('click', (e) => {
                     e.stopPropagation();
+                    e.preventDefault();
                     const classInfo = classRegistry.get(cleanType);
-                    // Clear active navigation
-                    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-                    renderItem(classInfo.class, 'class', classInfo.namespace);
+                    if (classInfo) {
+                        // Clear active navigation
+                        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+                        renderItem(classInfo.class, 'class', classInfo.namespace);
+                    }
                 });
             }
         }
@@ -624,7 +631,8 @@ function createTypeElement(typeString) {
 // Parse type string into parts (handling union types like "string|number")
 function parseTypeString(typeString) {
     const parts = [];
-    const tokens = typeString.split(/(\||&)/);
+    // Split by | and & but also handle generic types like table<string, XCore.Player>
+    const tokens = typeString.split(/(\||&|<|>|,)/);
     
     for (let i = 0; i < tokens.length; i++) {
         const token = tokens[i].trim();
@@ -632,6 +640,8 @@ function parseTypeString(typeString) {
         
         if (token === '|' || token === '&') {
             parts.push({ name: ' ' + token + ' ', separator: '' });
+        } else if (token === '<' || token === '>' || token === ',') {
+            parts.push({ name: token, separator: '' });
         } else {
             parts.push({ name: token, separator: '' });
         }
@@ -639,3 +649,43 @@ function parseTypeString(typeString) {
     
     return parts;
 }
+
+// Theme toggle: persist preference in localStorage and apply .dark on root
+function applyTheme(theme) {
+    const root = document.documentElement;
+    if (theme === 'dark') {
+        root.classList.add('dark');
+        const btn = document.getElementById('themeToggle');
+        if (btn) btn.textContent = '☀️';
+    } else {
+        root.classList.remove('dark');
+        const btn = document.getElementById('themeToggle');
+        if (btn) btn.textContent = '🌙';
+    }
+    try { localStorage.setItem('theme', theme); } catch (e) { /* ignore */ }
+}
+
+function initThemeToggle() {
+    const btn = document.getElementById('themeToggle');
+    if (!btn) return;
+
+    // Determine initial theme: stored preference, then system preference, then default light
+    let theme = null;
+    try { theme = localStorage.getItem('theme'); } catch (e) { theme = null; }
+
+    if (!theme) {
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        theme = prefersDark ? 'dark' : 'light';
+    }
+
+    applyTheme(theme);
+
+    btn.addEventListener('click', () => {
+        const current = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+        const next = current === 'dark' ? 'light' : 'dark';
+        applyTheme(next);
+    });
+}
+
+// Initialize theme when DOM content is ready
+document.addEventListener('DOMContentLoaded', initThemeToggle);

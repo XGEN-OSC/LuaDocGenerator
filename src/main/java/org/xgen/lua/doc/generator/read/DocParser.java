@@ -13,9 +13,10 @@ public class DocParser {
     
     // Patterns for parsing Lua doc comments
     private static final Pattern CLASS_PATTERN = Pattern.compile("---@class\\s+(\\S+)(?:\\s*:\\s*(\\S+))?\\s*(.*)");
-    private static final Pattern FIELD_PATTERN = Pattern.compile("---@field\\s+(?:(private|public)\\s+)?((?:fun\\(.+?\\):\\s*\\S+|[\\w|?]+))\\s+(\\w+)\\s*(.*)");
-    private static final Pattern TYPE_PATTERN = Pattern.compile("---@type\\s+([\\w|?]+)(?:\\s+(.+))?");
-    private static final Pattern PARAM_PATTERN = Pattern.compile("---@param\\s+(\\w+)\\s+([\\w|?]+)(?:\\s+(.+))?");
+    private static final Pattern FIELD_PATTERN = Pattern.compile("---@field\\s+(?:(private|public)\\s+)?(\\w+)\\s+((?:[\\w.|?]+(?:<[^>]+>)?)+)\\s*(.*)");
+    private static final Pattern TYPE_PATTERN = Pattern.compile("---@type\\s+((?:[\\w.|?]+(?:<[^>]+>)?)+)(?:\\s+(.+))?");
+    private static final Pattern PARAM_PATTERN = Pattern.compile("---@param\\s+(\\w+)\\s+((?:[\\w.|?]+(?:<[^>]+>)?)+)(?:\\s+(.+))?");
+    private static final Pattern RETURN_DOC_PATTERN = Pattern.compile("---@return\\s+((?:[\\w.|?]+(?:<[^>]+>)?)+)(?:\\s+(\\w+))?(?:\\s+(.+))?");
     private static final Pattern ENUM_PATTERN = Pattern.compile("---@enum\\s+(\\S+)(?:\\s+(.+))?");
     private static final Pattern FUNCTION_PATTERN = Pattern.compile("function\\s+(?:(\\w+(?:\\.\\w+)*)([.:]))?([\\w]+)\\s*\\(([^)]*)\\)");
     private static final Pattern ASSIGNMENT_PATTERN = Pattern.compile("(\\w+(?:\\.\\w+)*)\\s*=");
@@ -50,6 +51,25 @@ public class DocParser {
                 } else {
                     // No doc comments, check for undocumented function
                     processUndocumentedFunction(trimmed, classes, globalFunctions, reader);
+                }
+            } else if (trimmed.isEmpty()) {
+                // Empty line breaks the comment block
+                if (!commentBlock.isEmpty()) {
+                    // Process class/enum definitions that don't have code on the next line
+                    DocBlock docBlock = parseCommentBlock(commentBlock);
+                    if (docBlock.classInfo != null) {
+                        String className = docBlock.classInfo.name;
+                        ClassBuilder classBuilder = classes.computeIfAbsent(className, ClassBuilder::new);
+                        classBuilder.setDescription(docBlock.description);
+                        for (FieldInfo field : docBlock.fields) {
+                            classBuilder.addField(createField(field, false));
+                        }
+                    } else if (docBlock.enumInfo != null) {
+                        // Enums need the code line, so we can't process them here
+                        // Keep the comment block for now
+                        continue;
+                    }
+                    commentBlock.clear();
                 }
             }
         }
@@ -125,6 +145,11 @@ public class DocParser {
             }
         } else {
             // Handle function
+            // Skip local functions
+            if (LOCAL_PATTERN.matcher(codeLine).find()) {
+                return;
+            }
+            
             Matcher funcMatcher = FUNCTION_PATTERN.matcher(codeLine);
             if (funcMatcher.find()) {
                 String className = funcMatcher.group(1);
@@ -155,9 +180,14 @@ public class DocParser {
                     }
                 }
                 
-                // Check if function has return statement
-                if (hasReturnStatement(codeLine, reader)) {
-                    funcBuilder.addReturn(createReturn("any", null));
+                // Add return values from documentation
+                if (!docBlock.returns.isEmpty()) {
+                    for (ReturnInfo returnInfo : docBlock.returns) {
+                        funcBuilder.addReturn(createReturn(returnInfo.type, returnInfo.name, returnInfo.description));
+                    }
+                } else if (hasReturnStatement(codeLine, reader)) {
+                    // No @return documentation but has return statement
+                    funcBuilder.addReturn(createReturn("any", null, null));
                 }
                 
                 // Add to class or global functions
@@ -175,6 +205,11 @@ public class DocParser {
                                               Map<String, ClassBuilder> classes,
                                               List<FunctionBuilder> globalFunctions,
                                               BufferedReader reader) throws IOException {
+        // Skip local functions
+        if (LOCAL_PATTERN.matcher(codeLine).find()) {
+            return;
+        }
+        
         Matcher funcMatcher = FUNCTION_PATTERN.matcher(codeLine);
         if (funcMatcher.find()) {
             String className = funcMatcher.group(1);
@@ -197,7 +232,7 @@ public class DocParser {
             
             // Check if function has return statement
             if (hasReturnStatement(codeLine, reader)) {
-                funcBuilder.addReturn(createReturn("any", null));
+                funcBuilder.addReturn(createReturn("any", null, null));
             }
             
             // Add to class or global functions
@@ -238,8 +273,8 @@ public class DocParser {
                 if (matcher.find()) {
                     FieldInfo field = new FieldInfo();
                     field.visibility = matcher.group(1);
-                    field.type = matcher.group(2);
-                    field.name = matcher.group(3);
+                    field.name = matcher.group(2);  // name comes before type
+                    field.type = matcher.group(3);  // type comes after name
                     field.description = matcher.group(4);
                     block.fields.add(field);
                     lastField = field;
@@ -264,6 +299,17 @@ public class DocParser {
                     block.params.add(param);
                     lastParam = param;
                 }
+            } else if (content.startsWith("@return")) {
+                lastField = null;
+                lastParam = null;
+                Matcher matcher = RETURN_DOC_PATTERN.matcher(comment);
+                if (matcher.find()) {
+                    ReturnInfo returnInfo = new ReturnInfo();
+                    returnInfo.type = matcher.group(1);
+                    returnInfo.name = matcher.group(2);
+                    returnInfo.description = matcher.group(3);
+                    block.returns.add(returnInfo);
+                }
             } else if (content.startsWith("@enum")) {
                 lastField = null;
                 lastParam = null;
@@ -278,6 +324,10 @@ public class DocParser {
                 lastField = null;
                 lastParam = null;
                 continue;
+            } else if (content.isEmpty()) {
+                // Empty line - reset continuation context
+                lastField = null;
+                lastParam = null;
             } else {
                 // Regular description line - append to the appropriate element
                 if (lastField != null) {
@@ -468,8 +518,10 @@ public class DocParser {
         return new ParameterImpl(name, type, optional, Optional.ofNullable(description));
     }
     
-    private LuaReturnValue createReturn(String type, String description) {
-        return new ReturnValueImpl(type, "", Optional.ofNullable(description));
+    private LuaReturnValue createReturn(String type, String name, String description) {
+        boolean optional = type.endsWith("?");
+        String cleanType = optional ? type.substring(0, type.length() - 1) : type;
+        return new ReturnValueImpl(cleanType, name != null ? name : "", Optional.ofNullable(description));
     }
     
     // Inner classes for parsing
@@ -479,6 +531,7 @@ public class DocParser {
         List<FieldInfo> fields = new ArrayList<>();
         TypeInfo typeInfo;
         List<ParamInfo> params = new ArrayList<>();
+        List<ReturnInfo> returns = new ArrayList<>();
         EnumInfo enumInfo;
     }
     
@@ -504,6 +557,12 @@ public class DocParser {
     private static class ParamInfo {
         String name;
         String type;
+        String description;
+    }
+    
+    private static class ReturnInfo {
+        String type;
+        String name;
         String description;
     }
     
