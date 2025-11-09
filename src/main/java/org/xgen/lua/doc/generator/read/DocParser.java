@@ -30,12 +30,22 @@ public class DocParser {
         BufferedReader reader = new BufferedReader(new StringReader(luaContent));
         Map<String, ClassBuilder> classes = new LinkedHashMap<>();
         List<FunctionBuilder> globalFunctions = new ArrayList<>();
+        Set<String> localVariables = new HashSet<>();
         
         String line;
         List<String> commentBlock = new ArrayList<>();
         
         while ((line = reader.readLine()) != null) {
             String trimmed = line.trim();
+            
+            // Track local variable declarations
+            if (LOCAL_PATTERN.matcher(trimmed).find()) {
+                Matcher assignMatcher = ASSIGNMENT_PATTERN.matcher(trimmed);
+                if (assignMatcher.find()) {
+                    String varName = assignMatcher.group(1);
+                    localVariables.add(varName);
+                }
+            }
             
             // Collect comment lines
             if (trimmed.startsWith("---")) {
@@ -46,11 +56,11 @@ public class DocParser {
             } else if (!trimmed.isEmpty() && !trimmed.startsWith("--")) {
                 // Process the collected comments with the current line
                 if (!commentBlock.isEmpty()) {
-                    processDocBlock(commentBlock, trimmed, classes, globalFunctions, reader);
+                    processDocBlock(commentBlock, trimmed, classes, globalFunctions, localVariables, reader);
                     commentBlock.clear();
                 } else {
                     // No doc comments, check for undocumented function
-                    processUndocumentedFunction(trimmed, classes, globalFunctions, reader);
+                    processUndocumentedFunction(trimmed, classes, globalFunctions, localVariables, reader);
                 }
             } else if (trimmed.isEmpty()) {
                 // Empty line breaks the comment block
@@ -96,6 +106,7 @@ public class DocParser {
     private void processDocBlock(List<String> comments, String codeLine, 
                                   Map<String, ClassBuilder> classes,
                                   List<FunctionBuilder> globalFunctions,
+                                  Set<String> localVariables,
                                   BufferedReader reader) throws IOException {
         
         DocBlock docBlock = parseCommentBlock(comments);
@@ -135,6 +146,11 @@ public class DocParser {
                     String className = parts[0];
                     String fieldName = parts[1];
                     
+                    // Skip if the class is a local variable
+                    if (localVariables.contains(className)) {
+                        return;
+                    }
+                    
                     ClassBuilder classBuilder = classes.computeIfAbsent(className, ClassBuilder::new);
                     FieldInfo fieldInfo = new FieldInfo();
                     fieldInfo.name = fieldName;
@@ -157,11 +173,26 @@ public class DocParser {
                 String funcName = funcMatcher.group(3);
                 String params = funcMatcher.group(4);
                 
+                // Skip if the function belongs to a local variable
+                if (className != null && localVariables.contains(className.split("\\.")[0])) {
+                    return;
+                }
+                
                 FunctionBuilder funcBuilder = new FunctionBuilder(funcName);
                 funcBuilder.setDescription(docBlock.description);
                 
+                // Check for @non-static or @none-static annotation
+                boolean hasNonStaticAnnotation = docBlock.hasNonStatic;
+                
                 // Determine if static (. = static, : = instance)
-                boolean isStatic = separator == null || ".".equals(separator);
+                boolean isStatic;
+                if (hasNonStaticAnnotation) {
+                    // Explicit @non-static annotation overrides separator
+                    isStatic = false;
+                } else {
+                    // Use separator to determine (. = static, : = instance, null = static)
+                    isStatic = separator == null || ".".equals(separator);
+                }
                 funcBuilder.setStatic(isStatic);
                 
                 // Parse parameters
@@ -186,9 +217,10 @@ public class DocParser {
                         funcBuilder.addReturn(createReturn(returnInfo.type, returnInfo.name, returnInfo.description));
                     }
                 } else if (hasReturnStatement(codeLine, reader)) {
-                    // No @return documentation but has return statement
+                    // No @return documentation but has return statement - mark as "any"
                     funcBuilder.addReturn(createReturn("any", null, null));
                 }
+                // If neither @return nor return statement exists, don't add any return value
                 
                 // Add to class or global functions
                 if (className != null) {
@@ -204,6 +236,7 @@ public class DocParser {
     private void processUndocumentedFunction(String codeLine,
                                               Map<String, ClassBuilder> classes,
                                               List<FunctionBuilder> globalFunctions,
+                                              Set<String> localVariables,
                                               BufferedReader reader) throws IOException {
         // Skip local functions
         if (LOCAL_PATTERN.matcher(codeLine).find()) {
@@ -216,6 +249,11 @@ public class DocParser {
             String separator = funcMatcher.group(2);
             String funcName = funcMatcher.group(3);
             String params = funcMatcher.group(4);
+            
+            // Skip if the function belongs to a local variable
+            if (className != null && localVariables.contains(className.split("\\.")[0])) {
+                return;
+            }
             
             FunctionBuilder funcBuilder = new FunctionBuilder(funcName);
             funcBuilder.setDescription(null);
@@ -230,10 +268,11 @@ public class DocParser {
                 funcBuilder.addParameter(createParameter(paramName, "any", false, null));
             }
             
-            // Check if function has return statement
+            // Only add return value if function actually has a return statement
             if (hasReturnStatement(codeLine, reader)) {
                 funcBuilder.addReturn(createReturn("any", null, null));
             }
+            // If no return statement exists, don't add any return value
             
             // Add to class or global functions
             if (className != null) {
@@ -319,6 +358,11 @@ public class DocParser {
                     block.enumInfo.name = matcher.group(1);
                     block.enumInfo.description = matcher.group(2);
                 }
+            } else if (content.startsWith("@non-static") || content.startsWith("@none-static")) {
+                // Mark function as non-static (instance method)
+                block.hasNonStatic = true;
+                lastField = null;
+                lastParam = null;
             } else if (content.startsWith("@cast") || content.startsWith("@")) {
                 // Ignore unrecognized annotations
                 lastField = null;
@@ -457,38 +501,47 @@ public class DocParser {
     }
     
     private boolean hasReturnStatement(String functionLine, BufferedReader reader) throws IOException {
-        // This is a simplified check - in reality would need to parse the function body
-        // For now, we'll just mark the reader and read ahead
+        // The function line has already been read, so we start looking from the body
         reader.mark(10000);
         String line;
-        int braceDepth = 0;
         boolean foundReturn = false;
-        boolean inFunction = false;
         
-        // Include the function line
-        if (functionLine.contains("return")) {
-            foundReturn = true;
+        // Check the function line itself (after the function declaration)
+        String cleanFunctionLine = functionLine;
+        if (cleanFunctionLine.contains("--")) {
+            cleanFunctionLine = cleanFunctionLine.substring(0, cleanFunctionLine.indexOf("--"));
+        }
+        // Check if there's a return statement on the same line as the function declaration
+        int functionIndex = cleanFunctionLine.indexOf("function");
+        if (functionIndex >= 0) {
+            String afterFunction = cleanFunctionLine.substring(functionIndex);
+            if (RETURN_PATTERN.matcher(afterFunction).find()) {
+                foundReturn = true;
+            }
         }
         
+        // Now read the function body until we hit 'end'
         while ((line = reader.readLine()) != null) {
             String trimmed = line.trim();
             
-            if (!inFunction && trimmed.contains("function")) {
-                inFunction = true;
+            // Skip comment-only lines
+            if (trimmed.startsWith("--")) {
+                continue;
             }
             
-            // Track depth for nested functions
-            if (trimmed.startsWith("function")) {
-                braceDepth++;
-            }
-            if (trimmed.startsWith("end")) {
-                braceDepth--;
-                if (braceDepth <= 0 && inFunction) {
-                    break;
-                }
+            // Remove inline comments before checking
+            String codePart = trimmed;
+            if (codePart.contains("--")) {
+                codePart = codePart.substring(0, codePart.indexOf("--")).trim();
             }
             
-            if (RETURN_PATTERN.matcher(trimmed).find()) {
+            // Stop at the first 'end' (this closes our function)
+            if (codePart.equals("end")) {
+                break;
+            }
+            
+            // Check for return statement in code (not in comments)
+            if (RETURN_PATTERN.matcher(codePart).find()) {
                 foundReturn = true;
             }
         }
@@ -533,6 +586,7 @@ public class DocParser {
         List<ParamInfo> params = new ArrayList<>();
         List<ReturnInfo> returns = new ArrayList<>();
         EnumInfo enumInfo;
+        boolean hasNonStatic = false;
     }
     
     private static class ClassInfo {
