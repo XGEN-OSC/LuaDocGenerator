@@ -5,17 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lua Documentation Viewer</title>
     <link rel="stylesheet" href="docs.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Lua Documentation</h1>
-            <div class="file-selector">
-                <label for="jsonFile">Load Documentation:</label>
-                <input type="file" id="jsonFile" accept=".json">
+            <div class="header-left">
+                <h1>Lua Documentation</h1>
+                <div id="docTitle" class="doc-title-name"></div>
             </div>
-            <div class="theme-toggle">
-                <button id="themeToggle" aria-label="Toggle dark mode">🌙</button>
+            <div class="header-right">
+                <div class="file-selector">
+                    <label for="jsonFile" class="file-label">
+                        <i data-lucide="upload"></i>
+                        <span>Browse</span>
+                    </label>
+                    <input type="file" id="jsonFile" accept=".json">
+                </div>
+                <div class="theme-toggle">
+                    <button id="themeToggle" aria-label="Toggle dark mode">🌙</button>
+                </div>
             </div>
         </header>
 
@@ -35,8 +44,21 @@
                     <p>Please load a documentation JSON file using the file selector above.</p>
                 </div>
             </main>
+
+            <aside class="sidebar-right collapsed" id="sidebarRight">
+                <div class="sidebar-right-header">
+                    <h3>On This Page</h3>
+                    <button id="toggleSidebarRight" class="sidebar-toggle-btn" aria-label="Toggle sidebar">
+                        <i data-lucide="pin"></i>
+                    </button>
+                </div>
+                <nav id="pageNavigation" class="page-navigation">
+                    <p class="placeholder">No content loaded</p>
+                </nav>
+            </aside>
         </div>
     </div>
+
 
     <script src="docs.js"></script>
 </body>
