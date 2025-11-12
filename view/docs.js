@@ -2,25 +2,37 @@ let currentDoc = null;
 let currentFilter = '';
 let classRegistry = new Map(); // Map of className -> {class, namespace}
 
-// File input handler
-document.getElementById('jsonFile').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function(event) {
-            try {
-                currentDoc = JSON.parse(event.target.result);
-                buildClassRegistry(currentDoc);
-                renderNavigation(currentDoc);
-                updateDocTitle(file.name);
-                showWelcomeMessage();
-            } catch (error) {
-                alert('Error parsing JSON file: ' + error.message);
-            }
-        };
-        reader.readAsText(file);
-    }
-});
+if (WEB_URL != "") {
+    document.querySelector('.file-selector').style.display = 'none';
+    (async () => {
+        const json = await fetch(WEB_URL);
+        currentDoc = await json.json();
+        buildClassRegistry(currentDoc);
+        renderNavigation(currentDoc);
+        updateDocTitle(WEB_URL.split('/').pop());
+        showWelcomeMessage();
+    })();
+} else {
+    // File input handler
+    document.getElementById('jsonFile').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    currentDoc = JSON.parse(event.target.result);
+                    buildClassRegistry(currentDoc);
+                    renderNavigation(currentDoc);
+                    updateDocTitle(file.name);
+                    showWelcomeMessage();
+                } catch (error) {
+                    alert('Error parsing JSON file: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+    });   
+}
 
 // Update document title with sanitized and capitalized filename
 function updateDocTitle(filename) {
