@@ -1,5 +1,6 @@
-package org.xgen.lua.doc.generator.read;
+package org.xgen.lua.doc.generator.process;
 
+import org.jetbrains.annotations.NotNull;
 import org.xgen.lua.doc.generator.doc.*;
 
 import java.io.BufferedReader;
@@ -10,102 +11,89 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class DocParser {
-    
-    // Patterns for parsing Lua doc comments
-    private static final Pattern CLASS_PATTERN = Pattern.compile("---@class\\s+(\\S+)(?:\\s*:\\s*(\\S+))?\\s*(.*)");
-    private static final Pattern FIELD_PATTERN = Pattern.compile("---@field\\s+(?:(private|public)\\s+)?(\\w+)\\s+((?:[\\w.|?]+(?:<[^>]+>)?)+)\\s*(.*)");
-    private static final Pattern TYPE_PATTERN = Pattern.compile("---@type\\s+((?:[\\w.|?]+(?:<[^>]+>)?)+)(?:\\s+(.+))?");
-    private static final Pattern PARAM_PATTERN = Pattern.compile("---@param\\s+(\\w+)\\s+((?:[\\w.|?]+(?:<[^>]+>)?)+)(?:\\s+(.+))?");
-    private static final Pattern RETURN_DOC_PATTERN = Pattern.compile("---@return\\s+((?:[\\w.|?]+(?:<[^>]+>)?)+)(?:\\s+(\\w+))?(?:\\s+(.+))?");
-    private static final Pattern ENUM_PATTERN = Pattern.compile("---@enum\\s+(\\S+)(?:\\s+(.+))?");
-    private static final Pattern FUNCTION_PATTERN = Pattern.compile("function\\s+(?:(\\w+(?:\\.\\w+)*)([.:]))?([\\w]+)\\s*\\(([^)]*)\\)");
-    private static final Pattern ASSIGNMENT_PATTERN = Pattern.compile("(\\w+(?:\\.\\w+)*)\\s*=");
-    private static final Pattern LOCAL_PATTERN = Pattern.compile("local\\s+");
-    private static final Pattern RETURN_PATTERN = Pattern.compile("return\\s+");
-    
-    /**
-     * Parse a Lua file and extract documentation
-     */
-    public LuaDoc parse(String luaContent) throws IOException {
-        BufferedReader reader = new BufferedReader(new StringReader(luaContent));
-        Map<String, ClassBuilder> classes = new LinkedHashMap<>();
-        List<FunctionBuilder> globalFunctions = new ArrayList<>();
-        Set<String> localVariables = new HashSet<>();
-        
+    private final BufferedReader reader;
+    private final Set<String> localVariables = new HashSet<>();
+    private final List<String> commentBlock = new ArrayList<>();
+    private final Map<String, LuaClass.Builder> classes = new LinkedHashMap<>();
+    private final List<LuaFunction.Builder> globalFunctions = new ArrayList<>();
+
+    public DocParser(final @NotNull String luaContent) {
+        this.reader = new BufferedReader(new StringReader(luaContent));
+    }
+
+    public LuaDoc parse() throws IOException {
         String line;
-        List<String> commentBlock = new ArrayList<>();
         
         while ((line = reader.readLine()) != null) {
-            String trimmed = line.trim();
-            
-            // Track local variable declarations
-            if (LOCAL_PATTERN.matcher(trimmed).find()) {
-                Matcher assignMatcher = ASSIGNMENT_PATTERN.matcher(trimmed);
-                if (assignMatcher.find()) {
-                    String varName = assignMatcher.group(1);
-                    localVariables.add(varName);
-                }
-            }
-            
-            // Collect comment lines
-            if (trimmed.startsWith("---")) {
-                // Skip meta and example comments
-                if (!trimmed.startsWith("---@meta") && !trimmed.startsWith("---@example")) {
-                    commentBlock.add(trimmed);
-                }
-            } else if (!trimmed.isEmpty() && !trimmed.startsWith("--")) {
-                // Process the collected comments with the current line
-                if (!commentBlock.isEmpty()) {
-                    processDocBlock(commentBlock, trimmed, classes, globalFunctions, localVariables, reader);
-                    commentBlock.clear();
-                } else {
-                    // No doc comments, check for undocumented function
-                    processUndocumentedFunction(trimmed, classes, globalFunctions, localVariables, reader);
-                }
-            } else if (trimmed.isEmpty()) {
-                // Empty line breaks the comment block
-                if (!commentBlock.isEmpty()) {
-                    // Process class/enum definitions that don't have code on the next line
-                    DocBlock docBlock = parseCommentBlock(commentBlock);
-                    if (docBlock.classInfo != null) {
-                        String className = docBlock.classInfo.name;
-                        ClassBuilder classBuilder = classes.computeIfAbsent(className, ClassBuilder::new);
-                        classBuilder.setDescription(docBlock.description);
-                        for (FieldInfo field : docBlock.fields) {
-                            classBuilder.addField(createField(field, false));
-                        }
-                    } else if (docBlock.enumInfo != null) {
-                        // Enums need the code line, so we can't process them here
-                        // Keep the comment block for now
-                        continue;
-                    }
-                    commentBlock.clear();
-                }
-            }
+            processLine(line, reader);
         }
-        
-        // Build final documentation
+
+        return build();
+    }
+    
+    private LuaDoc build() {
         List<LuaClass> classList = new ArrayList<>();
-        for (ClassBuilder builder : classes.values()) {
+        for (LuaClass.Builder builder : classes.values()) {
             classList.add(builder.build());
         }
         
-        // Build global functions
         List<LuaFunction> globalFunctionList = new ArrayList<>();
-        for (FunctionBuilder builder : globalFunctions) {
+        for (LuaFunction.Builder builder : globalFunctions) {
             globalFunctionList.add(builder.build());
         }
         
-        // Create namespace with all parsed elements
         List<LuaNamespace> namespaces = new ArrayList<>();
         namespaces.add(new LuaNamespace("global", globalFunctionList, classList, new ArrayList<>()));
         
         return new LuaDoc(namespaces);
     }
-    
+
+    private void processLine(final @NotNull String line, final @NotNull BufferedReader reader) throws IOException {
+        String trimmed = line.trim();
+        
+        if (Patterns.LOCAL.matcher(trimmed).find()) {
+            Matcher assignMatcher = Patterns.ASSIGNMENT.matcher(trimmed);
+            if (assignMatcher.find()) {
+                String varName = assignMatcher.group(1);
+                localVariables.add(varName);
+            }
+        }
+        
+        if (Patterns.DOC_COMMENT.matcher(trimmed).find() && !Patterns.META.matcher(trimmed).find()) {
+                commentBlock.add(trimmed);
+        } else if (!trimmed.isEmpty() && !trimmed.startsWith("--")) {
+            // Process the collected comments with the current line
+            if (!commentBlock.isEmpty()) {
+                processDocBlock(commentBlock, trimmed, classes, globalFunctions, localVariables, reader);
+                commentBlock.clear();
+            } else {
+                // No doc comments, check for undocumented function
+                processUndocumentedFunction(trimmed, classes, globalFunctions, localVariables, reader);
+            }
+        } else if (trimmed.isEmpty()) {
+            // Empty line breaks the comment block
+            if (!commentBlock.isEmpty()) {
+                // Process class/enum definitions that don't have code on the next line
+                DocBlock docBlock = parseCommentBlock(commentBlock);
+                if (docBlock.classInfo != null) {
+                    String className = docBlock.classInfo.name;
+                    LuaClass.Builder classBuilder = classes.getOrDefault(className, new LuaClass.Builder());
+                    classBuilder.description(docBlock.description);
+                    classes.put(className, classBuilder);
+                    for (FieldInfo field : docBlock.fields) {
+                        classBuilder.addField(createField(field, false));
+                    }
+                } else if (docBlock.enumInfo != null) {
+                    return;
+                }
+                commentBlock.clear();
+            }
+        }
+    }
+
     private void processDocBlock(List<String> comments, String codeLine, 
-                                  Map<String, ClassBuilder> classes,
-                                  List<FunctionBuilder> globalFunctions,
+                                  Map<String, LuaClass.Builder> classes,
+                                  List<LuaFunction.Builder> globalFunctions,
                                   Set<String> localVariables,
                                   BufferedReader reader) throws IOException {
         
@@ -114,29 +102,31 @@ public class DocParser {
         if (docBlock.classInfo != null) {
             // Handle @class
             String className = docBlock.classInfo.name;
-            ClassBuilder classBuilder = classes.computeIfAbsent(className, ClassBuilder::new);
-            classBuilder.setDescription(docBlock.description);
-            
-            // Add fields defined in class comment
+            LuaClass.Builder classBuilder = classes.getOrDefault(className, new LuaClass.Builder());
+            classes.put(className, classBuilder);
+            classBuilder.name(className);
+            classBuilder.description(docBlock.description);
             for (FieldInfo field : docBlock.fields) {
                 classBuilder.addField(createField(field, false));
             }
         } else if (docBlock.enumInfo != null) {
             // Handle @enum as a class
             String enumName = docBlock.enumInfo.name;
-            ClassBuilder classBuilder = classes.computeIfAbsent(enumName, ClassBuilder::new);
-            classBuilder.setDescription(docBlock.enumInfo.description);
+            LuaClass.Builder classBuilder = classes.getOrDefault(enumName, new LuaClass.Builder());
+            classes.put(enumName, classBuilder);
+            classBuilder.name(enumName);
+            classBuilder.description(docBlock.enumInfo.description);
             
             // Parse enum values (codeLine should contain the opening brace)
             parseEnumValues(reader, classBuilder, codeLine);
         } else if (docBlock.typeInfo != null) {
             // Handle @type for static fields
-            Matcher assignMatcher = ASSIGNMENT_PATTERN.matcher(codeLine);
+            Matcher assignMatcher = Patterns.ASSIGNMENT.get().matcher(codeLine);
             if (assignMatcher.find()) {
                 String fullName = assignMatcher.group(1);
                 
                 // Skip local variables
-                if (LOCAL_PATTERN.matcher(codeLine).find()) {
+                if (Patterns.LOCAL.get().matcher(codeLine).find()) {
                     return;
                 }
                 
@@ -151,7 +141,9 @@ public class DocParser {
                         return;
                     }
                     
-                    ClassBuilder classBuilder = classes.computeIfAbsent(className, ClassBuilder::new);
+                    LuaClass.Builder classBuilder = classes.getOrDefault(className, new LuaClass.Builder());
+                    classes.put(className, classBuilder);
+                    classBuilder.name(className);
                     FieldInfo fieldInfo = new FieldInfo();
                     fieldInfo.name = fieldName;
                     fieldInfo.type = docBlock.typeInfo.type;
@@ -162,11 +154,11 @@ public class DocParser {
         } else {
             // Handle function
             // Skip local functions
-            if (LOCAL_PATTERN.matcher(codeLine).find()) {
+            if (Patterns.LOCAL.get().matcher(codeLine).find()) {
                 return;
             }
             
-            Matcher funcMatcher = FUNCTION_PATTERN.matcher(codeLine);
+            Matcher funcMatcher = Patterns.FUNCTION.get().matcher(codeLine);
             if (funcMatcher.find()) {
                 String className = funcMatcher.group(1);
                 String separator = funcMatcher.group(2);
@@ -178,8 +170,8 @@ public class DocParser {
                     return;
                 }
                 
-                FunctionBuilder funcBuilder = new FunctionBuilder(funcName);
-                funcBuilder.setDescription(docBlock.description);
+                LuaFunction.Builder funcBuilder = new LuaFunction.Builder().name(funcName);
+                funcBuilder.description(docBlock.description);
                 
                 // Check for @non-static or @none-static annotation
                 boolean hasNonStaticAnnotation = docBlock.hasNonStatic;
@@ -193,7 +185,7 @@ public class DocParser {
                     // Use separator to determine (. = static, : = instance, null = static)
                     isStatic = separator == null || ".".equals(separator);
                 }
-                funcBuilder.setStatic(isStatic);
+                funcBuilder.isStatic(isStatic);
                 
                 // Parse parameters
                 List<String> paramNames = parseParameterNames(params);
@@ -214,17 +206,19 @@ public class DocParser {
                 // Add return values from documentation
                 if (!docBlock.returns.isEmpty()) {
                     for (ReturnInfo returnInfo : docBlock.returns) {
-                        funcBuilder.addReturn(createReturn(returnInfo.type, returnInfo.name, returnInfo.description));
+                        funcBuilder.addReturnValue(createReturn(returnInfo.type, returnInfo.name, returnInfo.description));
                     }
                 } else if (hasReturnStatement(codeLine, reader)) {
                     // No @return documentation but has return statement - mark as "any"
-                    funcBuilder.addReturn(createReturn("any", null, null));
+                    funcBuilder.addReturnValue(createReturn("any", null, null));
                 }
                 // If neither @return nor return statement exists, don't add any return value
                 
                 // Add to class or global functions
                 if (className != null) {
-                    ClassBuilder classBuilder = classes.computeIfAbsent(className, ClassBuilder::new);
+                    LuaClass.Builder classBuilder = classes.getOrDefault(className, new LuaClass.Builder());
+                    classes.put(className, classBuilder);
+                    classBuilder.name(className);
                     classBuilder.addFunction(funcBuilder.build());
                 } else {
                     globalFunctions.add(funcBuilder);
@@ -234,16 +228,16 @@ public class DocParser {
     }
     
     private void processUndocumentedFunction(String codeLine,
-                                              Map<String, ClassBuilder> classes,
-                                              List<FunctionBuilder> globalFunctions,
+                                              Map<String, LuaClass.Builder> classes,
+                                              List<LuaFunction.Builder> globalFunctions,
                                               Set<String> localVariables,
                                               BufferedReader reader) throws IOException {
         // Skip local functions
-        if (LOCAL_PATTERN.matcher(codeLine).find()) {
+        if (Patterns.LOCAL.get().matcher(codeLine).find()) {
             return;
         }
         
-        Matcher funcMatcher = FUNCTION_PATTERN.matcher(codeLine);
+        Matcher funcMatcher = Patterns.FUNCTION.get().matcher(codeLine);
         if (funcMatcher.find()) {
             String className = funcMatcher.group(1);
             String separator = funcMatcher.group(2);
@@ -255,12 +249,12 @@ public class DocParser {
                 return;
             }
             
-            FunctionBuilder funcBuilder = new FunctionBuilder(funcName);
-            funcBuilder.setDescription(null);
+            LuaFunction.Builder funcBuilder = new LuaFunction.Builder().name(funcName);
+            funcBuilder.description(null);
             
             // Determine if static
             boolean isStatic = separator == null || ".".equals(separator);
-            funcBuilder.setStatic(isStatic);
+            funcBuilder.isStatic(isStatic);
             
             // Parse parameters - all type "any"
             List<String> paramNames = parseParameterNames(params);
@@ -270,13 +264,15 @@ public class DocParser {
             
             // Only add return value if function actually has a return statement
             if (hasReturnStatement(codeLine, reader)) {
-                funcBuilder.addReturn(createReturn("any", null, null));
+                funcBuilder.addReturnValue(createReturn("any", null, null));
             }
             // If no return statement exists, don't add any return value
             
             // Add to class or global functions
             if (className != null) {
-                ClassBuilder classBuilder = classes.computeIfAbsent(className, ClassBuilder::new);
+                LuaClass.Builder classBuilder = classes.getOrDefault(className, new LuaClass.Builder());
+                classes.put(className, classBuilder);
+                classBuilder.name(className);
                 classBuilder.addFunction(funcBuilder.build());
             } else {
                 globalFunctions.add(funcBuilder);
@@ -296,7 +292,7 @@ public class DocParser {
             if (content.startsWith("@class")) {
                 lastField = null;
                 lastParam = null;
-                Matcher matcher = CLASS_PATTERN.matcher(comment);
+                Matcher matcher = Patterns.CLASS.get().matcher(comment);
                 if (matcher.find()) {
                     block.classInfo = new ClassInfo();
                     block.classInfo.name = matcher.group(1);
@@ -308,7 +304,7 @@ public class DocParser {
                 }
             } else if (content.startsWith("@field")) {
                 lastParam = null;
-                Matcher matcher = FIELD_PATTERN.matcher(comment);
+                Matcher matcher = Patterns.FIELD.get().matcher(comment);
                 if (matcher.find()) {
                     FieldInfo field = new FieldInfo();
                     field.visibility = matcher.group(1);
@@ -321,7 +317,7 @@ public class DocParser {
             } else if (content.startsWith("@type")) {
                 lastField = null;
                 lastParam = null;
-                Matcher matcher = TYPE_PATTERN.matcher(comment);
+                Matcher matcher = Patterns.TYPE.get().matcher(comment);
                 if (matcher.find()) {
                     block.typeInfo = new TypeInfo();
                     block.typeInfo.type = matcher.group(1);
@@ -329,7 +325,7 @@ public class DocParser {
                 }
             } else if (content.startsWith("@param")) {
                 lastField = null;
-                Matcher matcher = PARAM_PATTERN.matcher(comment);
+                Matcher matcher = Patterns.PARAM.get().matcher(comment);
                 if (matcher.find()) {
                     ParamInfo param = new ParamInfo();
                     param.name = matcher.group(1);
@@ -341,7 +337,7 @@ public class DocParser {
             } else if (content.startsWith("@return")) {
                 lastField = null;
                 lastParam = null;
-                Matcher matcher = RETURN_DOC_PATTERN.matcher(comment);
+                Matcher matcher = Patterns.RETURN_DOC.get().matcher(comment);
                 if (matcher.find()) {
                     ReturnInfo returnInfo = new ReturnInfo();
                     returnInfo.type = matcher.group(1);
@@ -352,7 +348,7 @@ public class DocParser {
             } else if (content.startsWith("@enum")) {
                 lastField = null;
                 lastParam = null;
-                Matcher matcher = ENUM_PATTERN.matcher(comment);
+                Matcher matcher = Patterns.ENUM.get().matcher(comment);
                 if (matcher.find()) {
                     block.enumInfo = new EnumInfo();
                     block.enumInfo.name = matcher.group(1);
@@ -405,7 +401,7 @@ public class DocParser {
         return block;
     }
     
-    private void parseEnumValues(BufferedReader reader, ClassBuilder classBuilder, String firstLine) throws IOException {
+    private void parseEnumValues(BufferedReader reader, LuaClass.Builder classBuilder, String firstLine) throws IOException {
         String line;
         boolean inEnum = false;
         List<String> valueComments = new ArrayList<>();
@@ -449,7 +445,7 @@ public class DocParser {
         }
     }
     
-    private void processEnumValue(String line, List<String> valueComments, ClassBuilder classBuilder) {
+    private void processEnumValue(String line, List<String> valueComments, LuaClass.Builder classBuilder) {
         // Parse enum value - handle lines that might have commas and comments
         String cleanLine = line;
         
@@ -515,7 +511,7 @@ public class DocParser {
         int functionIndex = cleanFunctionLine.indexOf("function");
         if (functionIndex >= 0) {
             String afterFunction = cleanFunctionLine.substring(functionIndex);
-            if (RETURN_PATTERN.matcher(afterFunction).find()) {
+            if (Patterns.RETURN.get().matcher(afterFunction).find()) {
                 foundReturn = true;
             }
         }
@@ -541,7 +537,7 @@ public class DocParser {
             }
             
             // Check for return statement in code (not in comments)
-            if (RETURN_PATTERN.matcher(codePart).find()) {
+            if (Patterns.RETURN.get().matcher(codePart).find()) {
                 foundReturn = true;
             }
         }
@@ -568,13 +564,13 @@ public class DocParser {
     }
     
     private LuaParameter createParameter(String name, String type, boolean optional, String description) {
-        return new ParameterImpl(name, type, optional, Optional.ofNullable(description));
+        return new LuaParameter.Impl(name, type, optional, Optional.ofNullable(description));
     }
     
     private LuaReturnValue createReturn(String type, String name, String description) {
         boolean optional = type.endsWith("?");
         String cleanType = optional ? type.substring(0, type.length() - 1) : type;
-        return new ReturnValueImpl(cleanType, name != null ? name : "", Optional.ofNullable(description));
+        return new LuaReturnValue.Impl(cleanType, name != null ? name : "", Optional.ofNullable(description));
     }
     
     // Inner classes for parsing
@@ -623,87 +619,5 @@ public class DocParser {
     private static class EnumInfo {
         String name;
         String description;
-    }
-    
-    // Builder classes
-    private static class ClassBuilder {
-        private final String name;
-        private String description;
-        private final List<LuaField> fields = new ArrayList<>();
-        private final List<LuaFunction> functions = new ArrayList<>();
-        
-        ClassBuilder(String name) {
-            this.name = name;
-        }
-        
-        void setDescription(String description) {
-            this.description = description;
-        }
-        
-        void addField(LuaField field) {
-            fields.add(field);
-        }
-        
-        void addFunction(LuaFunction function) {
-            functions.add(function);
-        }
-        
-        LuaClass build() {
-            return new ClassImpl(name, Optional.ofNullable(description), 
-                                new ArrayList<>(fields), new ArrayList<>(functions));
-        }
-    }
-    
-    private static class FunctionBuilder {
-        private final String name;
-        private boolean isStatic = true;
-        private String description;
-        private final List<LuaParameter> parameters = new ArrayList<>();
-        private final List<LuaReturnValue> returns = new ArrayList<>();
-        
-        FunctionBuilder(String name) {
-            this.name = name;
-        }
-        
-        void setStatic(boolean isStatic) {
-            this.isStatic = isStatic;
-        }
-        
-        void setDescription(String description) {
-            this.description = description;
-        }
-        
-        void addParameter(LuaParameter parameter) {
-            parameters.add(parameter);
-        }
-        
-        void addReturn(LuaReturnValue returnValue) {
-            returns.add(returnValue);
-        }
-        
-        LuaFunction build() {
-            return new FunctionImpl(name, isStatic, Optional.ofNullable(description),
-                                   new ArrayList<>(parameters), new ArrayList<>(returns));
-        }
-    }
-    
-    // Implementation classes
-    private record ClassImpl(String name, Optional<String> description,
-                            List<LuaField> fields, List<LuaFunction> functions) 
-            implements LuaClass {
-    }
-    
-    private record FunctionImpl(String name, boolean isStatic, Optional<String> description,
-                               List<LuaParameter> parameters, List<LuaReturnValue> returns) 
-            implements LuaFunction {
-    }
-    
-    private record ParameterImpl(String name, String type, boolean optional, 
-                                Optional<String> description) 
-            implements LuaParameter {
-    }
-    
-    private record ReturnValueImpl(String type, String name, Optional<String> description) 
-            implements LuaReturnValue {
     }
 }

@@ -6,4 +6,6 @@ public interface LuaReturnValue {
     String type();
     String name();
     Optional<String> description();
+
+    public record Impl(String type, String name, Optional<String> description) implements LuaReturnValue { }
 }

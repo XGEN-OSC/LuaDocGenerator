@@ -1,7 +1,7 @@
 package org.xgen.lua.doc.generator;
 
 import org.xgen.lua.doc.generator.doc.LuaDoc;
-import org.xgen.lua.doc.generator.read.DocParser;
+import org.xgen.lua.doc.generator.process.DocParser;
 import org.xgen.lua.doc.generator.read.ProjectConfig;
 import org.xgen.lua.doc.generator.write.JsonExport;
 
@@ -59,8 +59,8 @@ public class Main {
             String luaFilePath = args[0];
             String content = Files.readString(Paths.get(luaFilePath));
             
-            DocParser parser = new DocParser();
-            doc = parser.parse(content);
+            DocParser parser = new DocParser(content);
+            doc = parser.parse();
             
             System.out.println("Successfully parsed Lua documentation!");
             

@@ -7,4 +7,6 @@ public interface LuaParameter {
     String type();
     boolean optional();
     Optional<String> description();
+
+    public record Impl(String name, String type, boolean optional, Optional<String> description) implements LuaParameter { }
 }

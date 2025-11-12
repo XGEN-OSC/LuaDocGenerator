@@ -12,4 +12,6 @@ public interface LuaField extends LuaDocumentableObject {
     default LuaDocumentableType documentableType() {
         return LuaDocumentableType.FIELD;
     }
+
+    public record Impl(boolean isStatic, String name, String type, Optional<String> description) implements LuaField { }
 }

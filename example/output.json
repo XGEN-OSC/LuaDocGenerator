@@ -46,11 +46,7 @@
                 }
               ],
               "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
+
               ]
             },
             {
@@ -72,11 +68,7 @@
                 }
               ],
               "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
+
               ]
             }
           ]
@@ -175,11 +167,7 @@
                 }
               ],
               "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
+
               ]
             },
             {
@@ -201,11 +189,7 @@
                 }
               ],
               "returns": [
-                {
-                  "type": "any",
-                  "name": "",
-                  "description": null
-                }
+
               ]
             }
           ]

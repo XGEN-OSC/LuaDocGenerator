@@ -1,6 +1,7 @@
 package org.xgen.lua.doc.generator.read;
 
 import org.xgen.lua.doc.generator.doc.*;
+import org.xgen.lua.doc.generator.process.DocParser;
 
 import java.io.IOException;
 import java.nio.file.FileSystems;
@@ -31,8 +32,7 @@ public class ProjectConfig {
         if (basePath == null) {
             basePath = Paths.get(".");
         }
-        
-        DocParser parser = new DocParser();
+
         List<LuaNamespace> namespaces = new ArrayList<>();
         
         for (Map.Entry<String, List<String>> entry : namespaceFiles.entrySet()) {
@@ -50,12 +50,12 @@ public class ProjectConfig {
                     // Expand glob pattern
                     List<Path> matchingFiles = expandGlobPattern(basePath, relativeFilePath);
                     for (Path fullPath : matchingFiles) {
-                        parseAndCollectFile(fullPath, parser, allClasses, allFunctions, allFields);
+                        parseAndCollectFile(fullPath, allClasses, allFunctions, allFields);
                     }
                 } else {
                     // Regular file path
                     Path fullPath = basePath.resolve(relativeFilePath);
-                    parseAndCollectFile(fullPath, parser, allClasses, allFunctions, allFields);
+                    parseAndCollectFile(fullPath, allClasses, allFunctions, allFields);
                 }
             }
             
@@ -70,7 +70,7 @@ public class ProjectConfig {
     /**
      * Parse a single file and collect its documentation elements
      */
-    private void parseAndCollectFile(Path fullPath, DocParser parser, 
+    private void parseAndCollectFile(Path fullPath, 
                                      List<LuaClass> allClasses, 
                                      List<LuaFunction> allFunctions, 
                                      List<LuaField> allFields) throws IOException {
@@ -84,7 +84,8 @@ public class ProjectConfig {
         }
         
         String luaContent = Files.readString(fullPath);
-        LuaDoc doc = parser.parse(luaContent);
+        DocParser luaDocParser = new DocParser(luaContent);
+        LuaDoc doc = luaDocParser.parse();
         
         // Extract all elements from the parsed document
         for (LuaNamespace ns : doc.namespaces()) {
