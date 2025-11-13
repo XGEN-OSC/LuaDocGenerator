@@ -107,11 +107,15 @@ jobs:
               env:
                 GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               run: |
-                set -e
-                upload_url="${{ fromJson(steps.release_manage.outputs.result).upload_url }}"
+                set -euo pipefail
+                # Get upload_url from github-script returned JSON
+                result='${{ steps.release_manage.outputs.result }}'
+                upload_url=$(printf '%s' "$result" | jq -r .upload_url)
                 # upload_url from GitHub API includes a template like: https://uploads.github.com/.../assets{?name,label}
                 upload_url_base="${upload_url%%\{*}"
-                asset_path="${{ steps.prep_asset.outputs.asset_path }}"
-                asset_name="${{ steps.prep_asset.outputs.asset_name }}"
+                asset_path='${{ steps.prep_asset.outputs.asset_path }}'
+                asset_name='${{ steps.prep_asset.outputs.asset_name }}'
+                # URL-encode the asset name using python3
+                encoded_name=$(python3 -c "import sys,urllib.parse;print(urllib.parse.quote(sys.argv[1]))" "$asset_name")
                 echo "Uploading $asset_name to $upload_url_base"
-                curl --fail -H "Authorization: token $GITHUB_TOKEN" -H "Content-Type: application/java-archive" --data-binary @"$asset_path" "$upload_url_base?name=$(printf '%s' "$asset_name" | jq -s -R -r @uri)"
+                curl --fail -H "Authorization: token $GITHUB_TOKEN" -H "Content-Type: application/java-archive" --data-binary @"$asset_path" "${upload_url_base}?name=${encoded_name}"
