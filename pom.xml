@@ -28,6 +28,11 @@
             <name>GitHub Packages</name>
             <url>https://maven.pkg.github.com/XGEN-OSC/LuaDocGenerator</url>
         </repository>
+        <snapshotRepository>
+            <id>github</id>
+            <name>GitHub Packages (snapshots)</name>
+            <url>https://maven.pkg.github.com/XGEN-OSC/LuaDocGenerator</url>
+        </snapshotRepository>
     </distributionManagement>
 
     <build>
