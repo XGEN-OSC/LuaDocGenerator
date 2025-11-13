@@ -2,7 +2,5 @@
     "shared": [
         "example.lua"
     ], 
-    "client": [
-        "example.lua"
-    ]
+    "client": [ ]
 }

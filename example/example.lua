@@ -4,10 +4,10 @@
 ---@class ExampleClass : table Classes can also have meta comments
 ---these comments can have multiple lines as well as field description
 ---as show below
----@field private string field1 this is a private field of type string
----@field public number? field2 this is an optional field that is public and of type number
----@field boolean|number field3 this field can be either boolean or number
----@field fun(param1: string, param2: number): nil method1 this is a method that takes
+---@field private field1 string this is a private field of type string
+---@field public field2? number? this is an optional field that is public and of type number
+---@field field3 boolean|number this field can be either boolean or number
+---@field method1 fun(param1: string, param2: number): nil method1 this is a method that takes
 ---a string and a number and returns nil, also these field descriptions can have multiple lines
 ExampleClass = {}
 

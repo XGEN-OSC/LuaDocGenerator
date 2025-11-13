@@ -42,6 +42,21 @@ public interface LuaClass extends LuaDocumentableObject {
             return this;
         }
 
+        public List<LuaFunction> getFunctions() {
+            return functions;
+        }
+
+        public List<LuaField> getFields() {
+            return fields;
+        }
+        public String getDescription() {
+            return description;
+        }
+
+        public String getName() {
+            return name;
+        }
+
         @Override
         public LuaClass build() {
             return new Impl(name, Optional.ofNullable(description), List.copyOf(fields), List.copyOf(functions));

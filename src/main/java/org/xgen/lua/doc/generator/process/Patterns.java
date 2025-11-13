@@ -11,16 +11,18 @@ import org.jetbrains.annotations.NotNull;
 public enum Patterns {
     DOC_COMMENT("---"),
     CLASS("---@class\\s+(\\S+)(?:\\s*:\\s*(\\S+))?\\s*(.*)"),
-    FIELD("---@field\\s+(?:(private|public)\\s+)?(\\w+)\\s+((?:[\\w.|?]+(?:<[^>]+>)?)+)\\s*(.*)"),
-    TYPE("---@type\\s+((?:[\\w.|?]+(?:<[^>]+>)?)+)(?:\\s+(.+))?"),
-    PARAM("---@param\\s+(\\w+)\\s+((?:[\\w.|?]+(?:<[^>]+>)?)+)(?:\\s+(.+))?"),
-    RETURN_DOC("---@return\\s+((?:[\\w.|?]+(?:<[^>]+>)?)+)(?:\\s+(\\w+))?(?:\\s+(.+))?"),
-    ENUM("---@enum\\s+(\\S+)(?:\\s+(.+))?"),
+    FIELD("---@field\\s+(?:(private|public)\\s+)?(\\w+)\\s+((?:fun\\([^)]*\\)(?:\\s*:\\s*[^\\s]+)?|\\S+)(?:\\s*\\|\\s*(?:fun\\([^)]*\\)(?:\\s*:\\s*[^\\s]+)?|\\S+))*)\\s*(.*)"),
+    TYPE("---@type\\s+((?:fun\\([^)]*\\)(?:\\s*:\\s*[^\\s]+)?|\\S+)(?:\\s*\\|\\s*(?:fun\\([^)]*\\)(?:\\s*:\\s*[^\\s]+)?|\\S+))*)(?:\\s+(.+))?"),
+    PARAM("---@param\\s+(\\w+)\\s+((?:fun\\([^)]*\\)(?:\\s*:\\s*[^\\s]+)?|\\S+)(?:\\s*\\|\\s*(?:fun\\([^)]*\\)(?:\\s*:\\s*[^\\s]+)?|\\S+))*)(?:\\s+(.+))?"),
+    RETURN_DOC("---@return\\s+((?:fun\\([^)]*\\)(?:\\s*:\\s*[^\\s]+)?|\\S+)(?:\\s*\\|\\s*(?:fun\\([^)]*\\)(?:\\s*:\\s*[^\\s]+)?|\\S+))*)(?:\\s+(\\w+))?(?:\\s+(.+))?"),
+    ENUM("---@enum\\s+(\\S+)(?:\\s*:\\s*(\\S+))?\\s*(.*)"),
     FUNCTION("function\\s+(?:(\\w+(?:\\.\\w+)*)([.:]))?([\\w]+)\\s*\\(([^)]*)\\)"),
     ASSIGNMENT("(\\w+(?:\\.\\w+)*)\\s*="),
     LOCAL("local\\s+"),
     RETURN("return\\s+"),
-    META("---@meta")
+    META("---@meta"),
+    NON_STATIC("---(@non-static|@none-static)"),
+    ANY_ANNOTATION("---@\\w+.*");
     ;
     private final @NotNull String pattern;
 

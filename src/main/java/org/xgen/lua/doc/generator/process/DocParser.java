@@ -75,15 +75,16 @@ public class DocParser {
             if (!commentBlock.isEmpty()) {
                 // Process class/enum definitions that don't have code on the next line
                 DocBlock docBlock = parseCommentBlock(commentBlock);
-                if (docBlock.classInfo != null) {
-                    String className = docBlock.classInfo.name;
+                if (docBlock.getClassBuilder() != null) {
+                    String className = docBlock.getClassBuilder().getName();
                     LuaClass.Builder classBuilder = classes.getOrDefault(className, new LuaClass.Builder());
-                    classBuilder.description(docBlock.description);
+                    classBuilder.name(className);
+                    classBuilder.description(docBlock.getDescription());
                     classes.put(className, classBuilder);
-                    for (FieldInfo field : docBlock.fields) {
-                        classBuilder.addField(createField(field, false));
+                    for (LuaField.Builder field : docBlock.getFields()) {
+                        classBuilder.addField(field.build());
                     }
-                } else if (docBlock.enumInfo != null) {
+                } else if (docBlock.getClassBuilder() != null) {
                     return;
                 }
                 commentBlock.clear();
@@ -99,27 +100,27 @@ public class DocParser {
         
         DocBlock docBlock = parseCommentBlock(comments);
         
-        if (docBlock.classInfo != null) {
+        if (docBlock.getClassBuilder() != null && !docBlock.isEnum()) {
             // Handle @class
-            String className = docBlock.classInfo.name;
+            String className = docBlock.getClassBuilder().getName();
             LuaClass.Builder classBuilder = classes.getOrDefault(className, new LuaClass.Builder());
             classes.put(className, classBuilder);
             classBuilder.name(className);
-            classBuilder.description(docBlock.description);
-            for (FieldInfo field : docBlock.fields) {
-                classBuilder.addField(createField(field, false));
+            classBuilder.description(docBlock.getDescription());
+            for (LuaField.Builder field : docBlock.getFields()) {
+                classBuilder.addField(field.build());
             }
-        } else if (docBlock.enumInfo != null) {
+        } else if (docBlock.getClassBuilder() != null && docBlock.isEnum()) {
             // Handle @enum as a class
-            String enumName = docBlock.enumInfo.name;
+            String enumName = docBlock.getClassBuilder().getName();
             LuaClass.Builder classBuilder = classes.getOrDefault(enumName, new LuaClass.Builder());
             classes.put(enumName, classBuilder);
             classBuilder.name(enumName);
-            classBuilder.description(docBlock.enumInfo.description);
+            classBuilder.description(docBlock.getDescription());
             
             // Parse enum values (codeLine should contain the opening brace)
             parseEnumValues(reader, classBuilder, codeLine);
-        } else if (docBlock.typeInfo != null) {
+        } else if (docBlock.getTypeBuilder() != null) {
             // Handle @type for static fields
             Matcher assignMatcher = Patterns.ASSIGNMENT.get().matcher(codeLine);
             if (assignMatcher.find()) {
@@ -144,11 +145,11 @@ public class DocParser {
                     LuaClass.Builder classBuilder = classes.getOrDefault(className, new LuaClass.Builder());
                     classes.put(className, classBuilder);
                     classBuilder.name(className);
-                    FieldInfo fieldInfo = new FieldInfo();
-                    fieldInfo.name = fieldName;
-                    fieldInfo.type = docBlock.typeInfo.type;
-                    fieldInfo.description = docBlock.typeInfo.description;
-                    classBuilder.addField(createField(fieldInfo, true));
+                    LuaField.Builder fieldBuilder = new LuaField.Builder();
+                    fieldBuilder.setName(fieldName);
+                    fieldBuilder.setType(docBlock.getTypeBuilder().getType());
+                    fieldBuilder.setDescription(docBlock.getTypeBuilder().getDescription());
+                    classBuilder.addField(fieldBuilder.build());
                 }
             }
         } else {
@@ -171,10 +172,10 @@ public class DocParser {
                 }
                 
                 LuaFunction.Builder funcBuilder = new LuaFunction.Builder().name(funcName);
-                funcBuilder.description(docBlock.description);
+                funcBuilder.description(docBlock.getDescription());
                 
                 // Check for @non-static or @none-static annotation
-                boolean hasNonStaticAnnotation = docBlock.hasNonStatic;
+                boolean hasNonStaticAnnotation = docBlock.hasNonStatic();
                 
                 // Determine if static (. = static, : = instance)
                 boolean isStatic;
@@ -190,27 +191,29 @@ public class DocParser {
                 // Parse parameters
                 List<String> paramNames = parseParameterNames(params);
                 for (String paramName : paramNames) {
-                    ParamInfo paramInfo = docBlock.params.stream()
-                        .filter(p -> p.name.equals(paramName))
+                    LuaParameter.Builder paramInfo = docBlock.getParameters().stream()
+                        .filter(p -> p.getName().equals(paramName))
                         .findFirst()
                         .orElse(null);
                     
                     if (paramInfo != null) {
-                        funcBuilder.addParameter(createParameter(paramInfo));
+                        funcBuilder.addParameter(paramInfo.build());
                     } else {
-                        // No documentation, use "any" type
-                        funcBuilder.addParameter(createParameter(paramName, "any", false, null));
+                        LuaParameter.Builder paramBuilder = new LuaParameter.Builder();
+                        paramBuilder.setName(paramName);
+                        funcBuilder.addParameter(paramBuilder.build());
                     }
                 }
                 
                 // Add return values from documentation
-                if (!docBlock.returns.isEmpty()) {
-                    for (ReturnInfo returnInfo : docBlock.returns) {
-                        funcBuilder.addReturnValue(createReturn(returnInfo.type, returnInfo.name, returnInfo.description));
+                if (!docBlock.getReturnBuilders().isEmpty()) {
+                    for (LuaReturnValue.Builder returnBuilder : docBlock.getReturnBuilders()) {
+                        funcBuilder.addReturnValue(returnBuilder.build());
                     }
                 } else if (hasReturnStatement(codeLine, reader)) {
-                    // No @return documentation but has return statement - mark as "any"
-                    funcBuilder.addReturnValue(createReturn("any", null, null));
+                    LuaReturnValue.Builder returnBuilder = new LuaReturnValue.Builder();
+                    returnBuilder.setType("any");
+                    funcBuilder.addReturnValue(returnBuilder.build());
                 }
                 // If neither @return nor return statement exists, don't add any return value
                 
@@ -259,12 +262,17 @@ public class DocParser {
             // Parse parameters - all type "any"
             List<String> paramNames = parseParameterNames(params);
             for (String paramName : paramNames) {
-                funcBuilder.addParameter(createParameter(paramName, "any", false, null));
+                LuaParameter.Builder paramBuilder = new LuaParameter.Builder();
+                paramBuilder.setName(paramName);
+                paramBuilder.setType("any");
+                funcBuilder.addParameter(paramBuilder.build());
             }
             
             // Only add return value if function actually has a return statement
             if (hasReturnStatement(codeLine, reader)) {
-                funcBuilder.addReturnValue(createReturn("any", null, null));
+                LuaReturnValue.Builder returnBuilder = new LuaReturnValue.Builder();
+                returnBuilder.setType("any");
+                funcBuilder.addReturnValue(returnBuilder.build());
             }
             // If no return statement exists, don't add any return value
             
@@ -283,165 +291,191 @@ public class DocParser {
     private DocBlock parseCommentBlock(List<String> comments) {
         DocBlock block = new DocBlock();
         StringBuilder description = new StringBuilder();
-        FieldInfo lastField = null;
-        ParamInfo lastParam = null;
+        LuaField.Builder lastField = null;
+        LuaParameter.Builder lastParam = null;
         
-        for (String comment : comments) {
-            String content = comment.substring(3).trim(); // Remove "---"
+        for (String comment : comments) { 
+            Matcher matcher = Patterns.CLASS.get().matcher(comment);
+            if (matcher.find()) {
+                lastField = null;
+                lastParam = null;
+                LuaClass.Builder classBuilder = new LuaClass.Builder();
+                block.setClassBuilder(classBuilder);
+                classBuilder.name(matcher.group(1));
+                String desc = matcher.group(3);
+                if (desc != null && !desc.isEmpty()) {
+                    description.append(desc);
+                }
+                continue;
+            }
+            matcher = Patterns.ENUM.get().matcher(comment);
+            if (matcher.find()) {
+                lastField = null;
+                lastParam = null;
+                LuaClass.Builder classBuilder = new LuaClass.Builder();
+                block.setClassBuilder(classBuilder);
+                block.setIsEnum(true);
+                classBuilder.name(matcher.group(1));
+                String desc = matcher.group(3);
+                if (desc != null && !desc.isEmpty()) {
+                    description.append(desc);
+                }
+                continue;
+            }
+
+            matcher = Patterns.FIELD.get().matcher(comment);
+            if (matcher.find()) {
+                lastParam = null;
+                LuaField.Builder fieldBuilder = new LuaField.Builder();
+                fieldBuilder.setStatic(false);
+                fieldBuilder.setName(matcher.group(2));
+                fieldBuilder.setType(matcher.group(3));
+                fieldBuilder.setDescription(matcher.group(4));
+                block.addField(fieldBuilder);
+                lastField = fieldBuilder;
+                continue;
+            }
+
+            matcher = Patterns.TYPE.get().matcher(comment);
+            if (matcher.find()) {
+                lastField = null;
+                lastParam = null;
+                LuaField.Builder fieldBuilder = new LuaField.Builder();
+                fieldBuilder.setType(matcher.group(1));
+                fieldBuilder.setDescription(matcher.group(2));
+                block.setTypeBuilder(fieldBuilder);
+                continue;
+            }
+
+            matcher = Patterns.PARAM.get().matcher(comment);
+            if (matcher.find()) {
+                lastField = null;
+
+                LuaParameter.Builder paramBuilder = new LuaParameter.Builder();
+                paramBuilder.setName(matcher.group(1));
+                paramBuilder.setType(matcher.group(2));
+                paramBuilder.setDescription(matcher.group(3));
+                block.addParameter(paramBuilder);
+                
+                lastParam = paramBuilder;
+                continue;
+            }
             
-            if (content.startsWith("@class")) {
+            matcher = Patterns.RETURN_DOC.get().matcher(comment);
+            if (matcher.find()) {
                 lastField = null;
                 lastParam = null;
-                Matcher matcher = Patterns.CLASS.get().matcher(comment);
-                if (matcher.find()) {
-                    block.classInfo = new ClassInfo();
-                    block.classInfo.name = matcher.group(1);
-                    block.classInfo.parent = matcher.group(2);
-                    String desc = matcher.group(3);
-                    if (desc != null && !desc.isEmpty()) {
-                        description.append(desc);
-                    }
-                }
-            } else if (content.startsWith("@field")) {
-                lastParam = null;
-                Matcher matcher = Patterns.FIELD.get().matcher(comment);
-                if (matcher.find()) {
-                    FieldInfo field = new FieldInfo();
-                    field.visibility = matcher.group(1);
-                    field.name = matcher.group(2);  // name comes before type
-                    field.type = matcher.group(3);  // type comes after name
-                    field.description = matcher.group(4);
-                    block.fields.add(field);
-                    lastField = field;
-                }
-            } else if (content.startsWith("@type")) {
+                
+                LuaReturnValue.Builder returnBuilder = new LuaReturnValue.Builder();
+                returnBuilder.setType(matcher.group(1));
+                returnBuilder.setName(matcher.group(2));
+                returnBuilder.setDescription(matcher.group(3));
+                block.addReturnBuilder(returnBuilder);
+                
+                continue;
+            }
+            
+            matcher = Patterns.NON_STATIC.get().matcher(comment);
+            if (matcher.find()) {
+                block.setHasNonStatic(true);
                 lastField = null;
                 lastParam = null;
-                Matcher matcher = Patterns.TYPE.get().matcher(comment);
-                if (matcher.find()) {
-                    block.typeInfo = new TypeInfo();
-                    block.typeInfo.type = matcher.group(1);
-                    block.typeInfo.description = matcher.group(2);
-                }
-            } else if (content.startsWith("@param")) {
-                lastField = null;
-                Matcher matcher = Patterns.PARAM.get().matcher(comment);
-                if (matcher.find()) {
-                    ParamInfo param = new ParamInfo();
-                    param.name = matcher.group(1);
-                    param.type = matcher.group(2);
-                    param.description = matcher.group(3);
-                    block.params.add(param);
-                    lastParam = param;
-                }
-            } else if (content.startsWith("@return")) {
-                lastField = null;
-                lastParam = null;
-                Matcher matcher = Patterns.RETURN_DOC.get().matcher(comment);
-                if (matcher.find()) {
-                    ReturnInfo returnInfo = new ReturnInfo();
-                    returnInfo.type = matcher.group(1);
-                    returnInfo.name = matcher.group(2);
-                    returnInfo.description = matcher.group(3);
-                    block.returns.add(returnInfo);
-                }
-            } else if (content.startsWith("@enum")) {
-                lastField = null;
-                lastParam = null;
-                Matcher matcher = Patterns.ENUM.get().matcher(comment);
-                if (matcher.find()) {
-                    block.enumInfo = new EnumInfo();
-                    block.enumInfo.name = matcher.group(1);
-                    block.enumInfo.description = matcher.group(2);
-                }
-            } else if (content.startsWith("@non-static") || content.startsWith("@none-static")) {
-                // Mark function as non-static (instance method)
-                block.hasNonStatic = true;
-                lastField = null;
-                lastParam = null;
-            } else if (content.startsWith("@cast") || content.startsWith("@")) {
+                continue;
+            }
+            
+            matcher = Patterns.ANY_ANNOTATION.get().matcher(comment);
+            if (matcher.find()) {
                 // Ignore unrecognized annotations
                 lastField = null;
                 lastParam = null;
                 continue;
-            } else if (content.isEmpty()) {
-                // Empty line - reset continuation context
+            }
+            
+            if (comment.isEmpty()) {
                 lastField = null;
                 lastParam = null;
-            } else {
-                // Regular description line - append to the appropriate element
-                if (lastField != null) {
-                    // Append to last field's description
-                    if (lastField.description == null || lastField.description.isEmpty()) {
-                        lastField.description = content;
-                    } else {
-                        lastField.description += "\n" + content;
-                    }
-                } else if (lastParam != null) {
-                    // Append to last param's description
-                    if (lastParam.description == null || lastParam.description.isEmpty()) {
-                        lastParam.description = content;
-                    } else {
-                        lastParam.description += "\n" + content;
-                    }
-                } else {
-                    // Append to general description
-                    if (description.length() > 0) {
-                        description.append("\n");
-                    }
-                    description.append(content);
-                }
+                continue;
             }
+
+            if (lastField != null) {
+                String desc = lastField.getDescription() != null ? lastField.getDescription() : "";
+                desc += (desc.isEmpty() ? "" : "\n") + comment;
+                lastField.setDescription(desc);
+                continue;
+            } 
+            
+            if (lastParam != null) {
+                String desc = lastParam.getDescription() != null ? lastParam.getDescription() : "";
+                desc += (desc.isEmpty() ? "" : "\n") + comment;
+                lastParam.setDescription(desc);
+                continue;
+            }
+
+            if (description.length() > 0) {
+                description.append("\n");
+            }
+
+            description.append(comment.substring(3).trim());
         }
         
         if (description.length() > 0) {
-            block.description = description.toString();
+            block.setDescription(description.toString());
         }
         
         return block;
     }
     
-    private void parseEnumValues(BufferedReader reader, LuaClass.Builder classBuilder, String firstLine) throws IOException {
+    private void parseEnumValues(BufferedReader reader, LuaClass.Builder classBuilder, String firstLine) {
         String line;
-        boolean inEnum = false;
         List<String> valueComments = new ArrayList<>();
+        boolean inEnum = false;
         
-        // Check if the opening brace is on the first line
-        if (firstLine.contains("{")) {
-            inEnum = true;
-        }
-        
-        while ((line = reader.readLine()) != null) {
-            String trimmed = line.trim();
-            
-            // Check for opening brace
-            if (!inEnum && trimmed.contains("{")) {
+        try {
+            // Check if opening brace is on the first line
+            if (firstLine.contains("{")) {
                 inEnum = true;
-                // If there's content after the brace on same line, process it
-                int braceIndex = trimmed.indexOf('{');
-                if (braceIndex < trimmed.length() - 1) {
-                    String afterBrace = trimmed.substring(braceIndex + 1).trim();
+                int braceIndex = firstLine.indexOf('{');
+                if (braceIndex < firstLine.length() - 1) {
+                    String afterBrace = firstLine.substring(braceIndex + 1).trim();
                     if (!afterBrace.isEmpty() && !afterBrace.startsWith("--")) {
                         processEnumValue(afterBrace, valueComments, classBuilder);
                     }
                 }
-                continue;
             }
             
-            // Check for closing brace
-            if (trimmed.startsWith("}") || trimmed.equals("}")) {
-                break;
-            }
+            while ((line = reader.readLine()) != null) {
+                String trimmed = line.trim();
+                
+                // Check for opening brace if not already in enum
+                if (!inEnum && trimmed.contains("{")) {
+                    inEnum = true;
+                    int braceIndex = trimmed.indexOf('{');
+                    if (braceIndex < trimmed.length() - 1) {
+                        String afterBrace = trimmed.substring(braceIndex + 1).trim();
+                        if (!afterBrace.isEmpty() && !afterBrace.startsWith("--")) {
+                            processEnumValue(afterBrace, valueComments, classBuilder);
+                        }
+                    }
+                    continue;
+                }
             
-            if (inEnum) {
-                if (trimmed.startsWith("---@type")) {
-                    valueComments.add(trimmed);
-                } else if (trimmed.startsWith("---")) {
-                    // Ignore other comments
-                } else if (!trimmed.isEmpty() && !trimmed.startsWith("--")) {
-                    processEnumValue(trimmed, valueComments, classBuilder);
+                // Check for closing brace
+                if (trimmed.startsWith("}") || trimmed.equals("}")) {
+                    break;
+                }
+                
+                if (inEnum) {
+                    if (trimmed.startsWith("---@type")) {
+                        valueComments.add(trimmed);
+                    } else if (trimmed.startsWith("---")) {
+                        // Ignore other comments
+                    } else if (!trimmed.isEmpty() && !trimmed.startsWith("--")) {
+                        processEnumValue(trimmed, valueComments, classBuilder);
+                    }
                 }
             }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
     
@@ -462,22 +496,20 @@ public class DocParser {
         if (assignMatcher.find()) {
             String valueName = assignMatcher.group(1);
             
-            FieldInfo fieldInfo = new FieldInfo();
-            fieldInfo.name = valueName;
-            fieldInfo.type = "any";
-            fieldInfo.description = null;
+            LuaField.Builder fieldBuilder = new LuaField.Builder();
+            fieldBuilder.setName(valueName);
+            fieldBuilder.setType("any");
             
-            // Check if there's a type annotation
             if (!valueComments.isEmpty()) {
                 DocBlock valueBlock = parseCommentBlock(valueComments);
-                if (valueBlock.typeInfo != null) {
-                    fieldInfo.type = valueBlock.typeInfo.type;
-                    fieldInfo.description = valueBlock.typeInfo.description;
+                if (valueBlock.getTypeBuilder() != null) {
+                    fieldBuilder.setType(valueBlock.getTypeBuilder().getType());
+                    fieldBuilder.setDescription(valueBlock.getTypeBuilder().getDescription());
                 }
                 valueComments.clear();
             }
             
-            classBuilder.addField(createField(fieldInfo, false));
+            classBuilder.addField(fieldBuilder.build());
         }
     }
     
@@ -544,80 +576,5 @@ public class DocParser {
         
         reader.reset();
         return foundReturn;
-    }
-    
-    private LuaField createField(FieldInfo info, boolean isStatic) {
-        LuaFieldBuilder builder = new LuaFieldBuilder();
-        builder.setName(info.name);
-        builder.setType(info.type);
-        builder.setStatic(isStatic);
-        if (info.description != null && !info.description.isEmpty()) {
-            builder.setDescription(info.description);
-        }
-        return builder.build();
-    }
-    
-    private LuaParameter createParameter(ParamInfo info) {
-        boolean optional = info.type.endsWith("?");
-        String type = optional ? info.type.substring(0, info.type.length() - 1) : info.type;
-        return createParameter(info.name, type, optional, info.description);
-    }
-    
-    private LuaParameter createParameter(String name, String type, boolean optional, String description) {
-        return new LuaParameter.Impl(name, type, optional, Optional.ofNullable(description));
-    }
-    
-    private LuaReturnValue createReturn(String type, String name, String description) {
-        boolean optional = type.endsWith("?");
-        String cleanType = optional ? type.substring(0, type.length() - 1) : type;
-        return new LuaReturnValue.Impl(cleanType, name != null ? name : "", Optional.ofNullable(description));
-    }
-    
-    // Inner classes for parsing
-    private static class DocBlock {
-        String description;
-        ClassInfo classInfo;
-        List<FieldInfo> fields = new ArrayList<>();
-        TypeInfo typeInfo;
-        List<ParamInfo> params = new ArrayList<>();
-        List<ReturnInfo> returns = new ArrayList<>();
-        EnumInfo enumInfo;
-        boolean hasNonStatic = false;
-    }
-    
-    private static class ClassInfo {
-        String name;
-        @SuppressWarnings("unused") // Reserved for future use
-        String parent;
-    }
-    
-    private static class FieldInfo {
-        @SuppressWarnings("unused") // Reserved for future use
-        String visibility;
-        String type;
-        String name;
-        String description;
-    }
-    
-    private static class TypeInfo {
-        String type;
-        String description;
-    }
-    
-    private static class ParamInfo {
-        String name;
-        String type;
-        String description;
-    }
-    
-    private static class ReturnInfo {
-        String type;
-        String name;
-        String description;
-    }
-    
-    private static class EnumInfo {
-        String name;
-        String description;
     }
 }

@@ -49,6 +49,26 @@ public interface LuaFunction extends LuaDocumentableObject {
             return this;
         }
 
+        public List<LuaReturnValue> getReturns() {
+            return returns;
+        }
+
+        public List<LuaParameter> getParameters() {
+            return parameters;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public boolean isStatic() {
+            return isStatic;
+        }
+
+        public String getName() {
+            return name;
+        }
+
         @Override
         public LuaFunction build() {
             return new Impl(name, isStatic, Optional.ofNullable(description), List.copyOf(parameters), List.copyOf(returns));
