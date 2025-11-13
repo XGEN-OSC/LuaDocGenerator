@@ -68,18 +68,21 @@ jobs:
             - name: Find or create release and delete existing asset
               id: release_manage
               uses: actions/github-script@v6
+              env:
+                ASSET_NAME: ${{ steps.prep_asset.outputs.asset_name }}
               with:
                 github-token: ${{ secrets.GITHUB_TOKEN }}
                 script: |
                   const tag = 'latest'
                   const repo = context.repo
-                  // Try to get release by tag
+                  const assetName = process.env.ASSET_NAME
+
+                  // Try to get release by tag, create if missing
                   let release
                   try {
                     release = await github.rest.repos.getReleaseByTag({ owner: repo.owner, repo: repo.repo, tag })
                   } catch (err) {
                     if (err.status === 404) {
-                      // Create release if not found
                       release = await github.rest.repos.createRelease({ owner: repo.owner, repo: repo.repo, tag_name: tag, name: tag, body: 'Release latest', draft: false, prerelease: false })
                     } else {
                       throw err
@@ -88,11 +91,8 @@ jobs:
 
                   const releaseId = release.data.id
                   const uploadUrl = release.data.upload_url
-                  core.setOutput('release_id', releaseId)
-                  core.setOutput('upload_url', uploadUrl)
 
                   // Delete existing asset with the same name if present
-                  const assetName = "${{ steps.prep_asset.outputs.asset_name }}"
                   const assets = await github.rest.repos.listReleaseAssets({ owner: repo.owner, repo: repo.repo, release_id: releaseId })
                   for (const asset of assets.data) {
                     if (asset.name === assetName) {
@@ -100,12 +100,15 @@ jobs:
                     }
                   }
 
+                  // Return values (github-script exposes returned value as `steps.<id>.outputs.result`)
+                  return { release_id: releaseId, upload_url: uploadUrl }
+
             - name: Upload release asset (curl)
               env:
                 GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               run: |
                 set -e
-                upload_url="${{ steps.release_manage.outputs.upload_url }}"
+                upload_url="${{ fromJson(steps.release_manage.outputs.result).upload_url }}"
                 # upload_url from GitHub API includes a template like: https://uploads.github.com/.../assets{?name,label}
                 upload_url_base="${upload_url%%\{*}"
                 asset_path="${{ steps.prep_asset.outputs.asset_path }}"
