@@ -65,24 +65,50 @@ jobs:
                 echo "asset_path=$jar_path" >> $GITHUB_OUTPUT
                 echo "asset_name=$(basename \"$jar_path\")" >> $GITHUB_OUTPUT
 
-            - name: Create GitHub release
-              id: create_release
-              uses: actions/create-release@v1
-              env:
-                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            - name: Find or create release and delete existing asset
+              id: release_manage
+              uses: actions/github-script@v6
               with:
-                tag_name: latest
-                release_name: latest
-                body: Release latest
-                draft: false
-                prerelease: false
+                github-token: ${{ secrets.GITHUB_TOKEN }}
+                script: |
+                  const tag = 'latest'
+                  const repo = context.repo
+                  // Try to get release by tag
+                  let release
+                  try {
+                    release = await github.rest.repos.getReleaseByTag({ owner: repo.owner, repo: repo.repo, tag })
+                  } catch (err) {
+                    if (err.status === 404) {
+                      // Create release if not found
+                      release = await github.rest.repos.createRelease({ owner: repo.owner, repo: repo.repo, tag_name: tag, name: tag, body: 'Release latest', draft: false, prerelease: false })
+                    } else {
+                      throw err
+                    }
+                  }
 
-            - name: Upload release asset
-              uses: actions/upload-release-asset@v1
+                  const releaseId = release.data.id
+                  const uploadUrl = release.data.upload_url
+                  core.setOutput('release_id', releaseId)
+                  core.setOutput('upload_url', uploadUrl)
+
+                  // Delete existing asset with the same name if present
+                  const assetName = "${{ steps.prep_asset.outputs.asset_name }}"
+                  const assets = await github.rest.repos.listReleaseAssets({ owner: repo.owner, repo: repo.repo, release_id: releaseId })
+                  for (const asset of assets.data) {
+                    if (asset.name === assetName) {
+                      await github.rest.repos.deleteReleaseAsset({ owner: repo.owner, repo: repo.repo, asset_id: asset.id })
+                    }
+                  }
+
+            - name: Upload release asset (curl)
               env:
                 GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              with:
-                upload_url: ${{ steps.create_release.outputs.upload_url }}
-                asset_path: ${{ steps.prep_asset.outputs.asset_path }}
-                asset_name: ${{ steps.prep_asset.outputs.asset_name }}
-                asset_content_type: application/java-archive
+              run: |
+                set -e
+                upload_url="${{ steps.release_manage.outputs.upload_url }}"
+                # upload_url from GitHub API includes a template like: https://uploads.github.com/.../assets{?name,label}
+                upload_url_base="${upload_url%%\{*}"
+                asset_path="${{ steps.prep_asset.outputs.asset_path }}"
+                asset_name="${{ steps.prep_asset.outputs.asset_name }}"
+                echo "Uploading $asset_name to $upload_url_base"
+                curl --fail -H "Authorization: token $GITHUB_TOKEN" -H "Content-Type: application/java-archive" --data-binary @"$asset_path" "$upload_url_base?name=$(printf '%s' "$asset_name" | jq -s -R -r @uri)"
