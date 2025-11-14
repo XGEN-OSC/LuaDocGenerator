@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.xgen-osc</groupId>
+    <groupId>XGEN-OSC</groupId>
     <artifactId>LuaDocGenerator</artifactId>
     <version>1.0.0</version>
 
@@ -25,22 +25,7 @@
             <scope>compile</scope>
         </dependency>
     </dependencies>
-
-    <profiles>
-        <profile>
-            <id>github</id>
-            <repositories>
-                <repository>
-                <id>github</id>
-                <url>https://maven.pkg.github.com/XGEN-OSC/LuaDocGenerator</url>
-                <snapshots>
-                    <enabled>true</enabled>
-                </snapshots>
-                </repository>
-            </repositories>
-        </profile>
-    </profiles>
-
+    
     <distributionManagement>
         <repository>
             <id>github</id>
