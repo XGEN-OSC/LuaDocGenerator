@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>io.github.xgenosc</groupId>
-    <artifactId>LuaDocGenerator</artifactId>
+    <artifactId>luadocgenerator</artifactId>
     <version>1.0.0</version>
 
     <name>LuaDocGenerator</name>
