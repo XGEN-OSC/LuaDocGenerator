@@ -6,7 +6,11 @@
 
     <groupId>org.xgen-osc</groupId>
     <artifactId>LuaDocGenerator</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0.0</version>
+
+    <name>LuaDocGenerator</name>
+    <description>Documentation generator for Lua</description>
+    <url>https://github.com/XGEN-OSC/LuaDocGenerator</url>
 
     <properties>
         <maven.compiler.source>23</maven.compiler.source>
