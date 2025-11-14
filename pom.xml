@@ -22,18 +22,20 @@
         </dependency>
     </dependencies>
 
-    <distributionManagement>
-        <repository>
+    <profiles>
+        <profile>
             <id>github</id>
-            <name>GitHub Packages</name>
-            <url>https://maven.pkg.github.com/XGEN-OSC/LuaDocGenerator</url>
-        </repository>
-        <snapshotRepository>
-            <id>github</id>
-            <name>GitHub Packages (snapshots)</name>
-            <url>https://maven.pkg.github.com/XGEN-OSC/LuaDocGenerator</url>
-        </snapshotRepository>
-    </distributionManagement>
+            <repositories>
+                <repository>
+                <id>github</id>
+                <url>https://maven.pkg.github.com/XGEN-OSC/LuaDocGenerator</url>
+                <snapshots>
+                    <enabled>true</enabled>
+                </snapshots>
+                </repository>
+            </repositories>
+        </profile>
+    </profiles>
 
     <build>
         <plugins>
@@ -50,6 +52,7 @@
                 </configuration>
             </plugin>
         </plugins>
+        <finalName>LuaDocGenerator</finalName>
     </build>
 
 </project>
