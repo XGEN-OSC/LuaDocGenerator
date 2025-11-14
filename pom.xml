@@ -37,6 +37,13 @@
         </profile>
     </profiles>
 
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <url>https://maven.pkg.github.com/XGEN-OSC/LuaDocGenerator</url>
+        </repository>
+    </distributionManagement>
+
     <build>
         <plugins>
             <plugin>
