@@ -1,0 +1,35 @@
+{
+  "name": "lua-doc-generator",
+  "displayName": "Lua Doc Generator",
+  "description": "Generates documentation for your Lua projects.",
+  "publisher": "Java3east", 
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/XGEN-OSC/LuaDocGenerator.git"
+  },
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+        {
+            "command": "extension.generateLuaDocs",
+            "title": "Generate Lua Documentation"
+        }
+    ],
+    "menus": {
+        "editor/title": [
+            {
+                "when": "resourceFilename == project.json",
+                "command": "extension.generateLuaDocs",
+                "group": "navigation"
+            }
+        ]
+    }
+  }
+}
