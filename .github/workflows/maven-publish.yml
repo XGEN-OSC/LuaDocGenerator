@@ -34,8 +34,13 @@ jobs:
           gh release delete-asset $ASSET_ID --yes
         fi
 
+    - name: Find built JAR
+      run: |
+        JAR=$(find target -name "*.jar" | head -n 1)
+        echo "JAR_FILE=$JAR" >> $GITHUB_ENV
+
     - name: Upload JAR to latest release
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        gh release upload latest target/LuaDocGenerator-1.0.0.jar --clobber
+        gh release upload latest "$JAR_FILE" --clobber
