@@ -5,37 +5,28 @@ on:
     branches: [ main ]
 
 permissions:
-  contents: write   # needed for creating releases
+  contents: write
 
 jobs:
   build-release:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Java 23
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '23'
+      - name: Ensure GitHub CLI is installed
+        uses: actions/setup-gh-cli@v3
 
       - name: Build LuaDocGenerator JAR
         run: mvn clean package
 
-      - name: Create / Update latest Release
-        id: release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: latest
-          name: latest
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Delete old asset from latest release if it exists
+        run: |
+          RELEASE_ID=$(gh release view latest --json id --jq .id)
+          if gh release view latest --json assets --jq '.assets[].name' | grep -q LuaDocGenerator-1.0.0.jar; then
+            ASSET_ID=$(gh release view latest --json assets --jq '.assets[] | select(.name=="LuaDocGenerator-1.0.0.jar") | .id')
+            gh release delete-asset $ASSET_ID --yes
+          fi
 
-      - name: Upload JAR to Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: target/LuaDocGenerator-1.0.0.jar
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload new JAR to latest release
+        run: |
+          gh release upload latest target/LuaDocGenerator-1.0.0.jar --clobber
+
