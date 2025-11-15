@@ -6,10 +6,14 @@ const { config } = require('process');
 
 async function runLuaDoc(context) {
     const jarPath = path.join(context.extensionPath, 'LuaDocGenerator.jar');
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+        vscode.window.showInformationMessage("No active editor");
+        return;
+    }
 
-    vscode.window.showInformationMessage("Running LuaDocGenerator...");
-
-    const process = spawn('java', ['-jar', jarPath, '--project', 'project.json', 'output.json'], {
+    const filePath = editor.document.uri.fsPath;
+    const process = spawn('java', ['-jar', jarPath, '--project', filePath, 'output.json'], {
         cwd: vscode.workspace.rootPath
     });
 
@@ -28,8 +32,6 @@ async function runLuaDoc(context) {
             vscode.window.showErrorMessage(`LuaDocGenerator failed with code ${code}`);
             return;
         }
-
-        vscode.window.showInformationMessage(`LuaDocGenerator successfully finished`);
 
         const generatedFile = path.join(vscode.workspace.rootPath, "output.json");
 
