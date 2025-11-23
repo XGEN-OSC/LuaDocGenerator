@@ -52,8 +52,7 @@ public interface LuaParameter {
         public LuaParameter build() {
             if (name == null)
                 throw new IllegalStateException("Lua Parameter must have a name");
-            if (type == null)
-                throw new IllegalStateException("Lua Parameter must have a type");
+            type = type == null ? "any" : type;
             return new LuaParameter.Impl(name, type, optional, Optional.ofNullable(description));
         }
     }

@@ -57,8 +57,7 @@ public interface LuaField extends LuaDocumentableObject {
         public LuaField build() {
             if (name == null)
                 throw new IllegalStateException("Lua Field must have a name");
-            if (type == null)
-                throw new IllegalStateException("Lua Field must have a type");
+            type = type == null ? "any" : type;
             return new LuaField.Impl(isStatic, name, type, Optional.ofNullable(description));
         }
     }
